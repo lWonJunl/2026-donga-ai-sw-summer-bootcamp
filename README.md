@@ -24,30 +24,24 @@
 
 ```text
 2026-donga-ai-sw-summer-bootcamp
-├── Week 01
-├── Week 02
-├── Week 03
-├── Week 04
-├── Week 05
-├── Week 06
-├── Week 07
-└── Week 08
+├── Chapter01-Day01
+├── Chapter01-Day02
+├── Chapter01-Day03
+├── Chapter01-Day04
+└── Chapter01-Day05
 ```
 
 <br>
 
 ## 📖 Contents
 
-| Week | Topic | Note |
-| :--: | ----- | ---- |
-|  01  |       |      |
-|  02  |       |      |
-|  03  |       |      |
-|  04  |       |      |
-|  05  |       |      |
-|  06  |       |      |
-|  07  |       |      |
-|  08  |       |      |
+| Chapter | Day | Topic | Note |
+| :-----: | :--: | ----- | ---- |
+| 01 | 01 | Dynamic Programming | |
+| 01 | 02 | | |
+| 01 | 03 | | |
+| 01 | 04 | | |
+| 01 | 05 | | |
 
 <br>
 
@@ -57,7 +51,7 @@
 | ------------------- | ------------------ |
 | **Language**        | Python             |
 | **Libraries**       | *(To be updated)*  |
-| **AI**              | ChatGPT            |
+| **AI**              | ChatGPT 5.5        |
 | **IDE**             | Visual Studio Code |
 | **Version Control** | Git, GitHub        |
 
