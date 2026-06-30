@@ -1,5 +1,5 @@
 def meeting_room(meettings):
-    # 회의 종료 시간이 빠른 순서로 정렬
+    # 회의 종료 시간이 빠른 순서로 정렬 (Greedy Algorithm을 위한 준비)
     meettings.sort(key=lambda x : x[1])     # lambda는 휘발성 --> sort 후에는 사라져서 메모리 이득
 
     # (지역)변수 선언
@@ -7,7 +7,7 @@ def meeting_room(meettings):
     end_time = 0
     selected = []
 
-    # 이전 회의가 끝난 후 회의가 시작하는 회의 선택
+    # 이전 회의가 끝난 후 회의가 시작하는 회의 선택 (Greedy Algorithm 적용)
     for start, end in meettings:
         if start >= end_time:
             selected.append((start, end))
