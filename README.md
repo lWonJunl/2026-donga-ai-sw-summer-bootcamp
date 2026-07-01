@@ -56,7 +56,6 @@
 | **AI**              | ChatGPT 5.5                |
 | **IDE**             | Visual Studio Code         |
 | **Version Control** | Git, GitHub                |
->>>>>>> Stashed changes
 
 <br>
 
