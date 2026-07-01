@@ -17,7 +17,7 @@
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
 | **Language**     | Python                                                        |
 | **Status**       | 🚧 In Progress                                                |
-
+<!-- ✅ Completed -->
 <br>
 
 ## 📂 Repository Structure
@@ -39,21 +39,24 @@
 | :-----: | :--: | ----- | ---- |
 | 01 | 01 | Dynamic Programming | |
 | 01 | 02 | Greedy Algorithm | |
-| 01 | 03 | | |
-| 01 | 04 | | |
-| 01 | 05 | | |
+| 01 | 03 | Graph Algorithm | |
+<!-- | 01 | 04 | | |-->
+<!-- | 01 | 05 | | |-->
 
 <br>
 
 ## 🛠️ Tech Stack
 
-| Category            | Stack              |
-| ------------------- | ------------------ |
-| **Language**        | Python             |
-| **Libraries**       | *(To be updated)*  |
-| **AI**              | ChatGPT 5.5        |
-| **IDE**             | Visual Studio Code |
-| **Version Control** | Git, GitHub        |
+| Category            | Stack                      |
+| ------------------- | -------------------------- |
+| **Language**        | Python                     |
+| **Libraries**       | Feedparser                 |
+| **Framework**       | *(To be updated)*          |
+| **Server**          | *(To be updated)*          |
+| **AI**              | ChatGPT 5.5                |
+| **IDE**             | Visual Studio Code         |
+| **Version Control** | Git, GitHub                |
+>>>>>>> Stashed changes
 
 <br>
 
