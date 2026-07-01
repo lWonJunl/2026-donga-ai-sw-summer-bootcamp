@@ -40,8 +40,8 @@
 | 01 | 01 | Dynamic Programming | |
 | 01 | 02 | Greedy Algorithm | |
 | 01 | 03 | Graph Algorithm | |
-<!-- | 01 | 04 | | |-->
-<!-- | 01 | 05 | | |-->
+| 01 | 04 | Dijkstra Algorithm | |
+| 01 | 05 | | |
 
 <br>
 
@@ -53,13 +53,13 @@
 | **Libraries**       | Feedparser                 |
 | **Framework**       | *(To be updated)*          |
 | **Server**          | *(To be updated)*          |
-| **AI**              | ChatGPT 5.5                |
+| **AI**              | ChatGPT 5.5, Gemini 3.5    |
 | **IDE**             | Visual Studio Code         |
 | **Version Control** | Git, GitHub                |
 
 <br>
 
-## 🤖 AI-Assisted Development
+## 🤖 AI-Assisted DevelopmentS
 
 본 부트캠프는 **AI 기반 개발(Vibe Coding)** 방식을 바탕으로 진행되었습니다.
 
