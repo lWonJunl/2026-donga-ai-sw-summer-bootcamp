@@ -16,7 +16,7 @@ import numpy as np
 # ==========================================================
 
 # 미로 이미지를 불러온다.
-img = cv2.imread("C:/Users/user/Desktop/maze.png")
+img = cv2.imread("maze.png")
 
 # 이미지 불러오기 실패시 프로그램 종료
 if img is None:
