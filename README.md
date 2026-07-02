@@ -28,7 +28,7 @@
 ├── Chapter01-Day02
 ├── Chapter01-Day03
 ├── Chapter01-Day04
-└── Chapter01-Day05
+└── (...)
 ```
 
 <br>
