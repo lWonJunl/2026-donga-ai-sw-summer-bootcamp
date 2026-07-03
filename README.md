@@ -28,7 +28,8 @@
 ├── Chapter01-Day02
 ├── Chapter01-Day03
 ├── Chapter01-Day04
-└── (...)
+├── Chapter01-Day05
+└── (In Progress...)
 ```
 
 <br>
@@ -41,7 +42,12 @@
 | 01 | 02 | Greedy Algorithm | |
 | 01 | 03 | Graph Algorithm | |
 | 01 | 04 | Dijkstra Algorithm | |
-| 01 | 05 | | |
+| 01 | 05 | Mini Project | |
+| 02 | 01 |  | |
+| 02 | 02 |  | |
+| 02 | 03 |  | |
+| 02 | 04 |  | |
+| 02 | 05 | Mini Project | |
 
 <br>
 
@@ -53,7 +59,7 @@
 | **Libraries**       | Feedparser                 |
 | **Framework**       | *(To be updated)*          |
 | **Server**          | *(To be updated)*          |
-| **AI**              | ChatGPT 5.5, Gemini 3.5    |
+| **AI(LLM)**         | ChatGPT 5.5, Gemini 3.5    |
 | **IDE**             | Visual Studio Code         |
 | **Version Control** | Git, GitHub                |
 
