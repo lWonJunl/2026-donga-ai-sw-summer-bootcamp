@@ -1,4 +1,4 @@
-import random
+﻿import random
 
 class RealCubeSolver3D:
     U, D, F, B, L, R = 0, 1, 2, 3, 4, 5
@@ -140,85 +140,118 @@ class RealCubeSolver3D:
         return misplaced / 8.0
 
     def solve_ida_star(self):
-        print("\n==================================================")
-        print("⚙️ [연산 과정 시작] IDA* 알고리즘 트리 탐색 실시간 추적")
-        print("==================================================")
-        
+        # IDA* 탐색 시작 전 초기 제한값 설정
         bound = self.heuristic()
+
+        # 현재까지의 이동 경로 저장
         path = []
+
+        # 가능한 회전 목록
         possible_moves = ["U", "D", "F", "B", "L", "R", "U'", "D'", "F'", "B'", "L'", "R'"]
+
+        # 탐색한 상태 수 초기화
         self.nodes_visited = 0
 
         def search(g, bound):
             self.nodes_visited += 1
+
             h = self.heuristic()
             f = g + h
-            
-            current_formula = " -> ".join(path) if path else "시작 상태"
-            print(f"🔍 [노드 #{self.nodes_visited:04d}] 깊이(g): {g} | 예상치(h): {h:.2f} | 총비용(f): {f:.2f} (제한선: {bound:.2f})")
-            print(f"   ┗ 🛠️ 테스트 중인 무브 공식: [ {current_formula} ]")
 
-            if f > bound: 
-                print(f"   ┗ ❌ [가지치기] 예상 비용이 제한선을 초과하여 이 탐색줄기는 종료합니다.\n")
+            # 제한값을 넘으면 가지치기
+            if f > bound:
                 return f
-            if self.is_solved(): 
-                print(f"\n🎯 [탐색 대성공!] {self.nodes_visited}번째 상태 검사에서 해법을 발견했습니다.")
-                return "FOUND"
-            
-            min_val = float('inf')
-            for move in possible_moves:
-                if path and path[-1].endswith("'") and path[-1][0] == move: continue
-                if path and move.endswith("'") and move[0] == path[-1]: continue
 
-                backup = [[[self.cube[f][r][c] for c in range(3)] for r in range(3)] for f in range(6)]
-                
+            # 큐브가 완성되었으면 성공
+            if self.is_solved():
+                return "FOUND"
+
+            min_val = float('inf')
+
+            for move in possible_moves:
+                # 바로 직전 움직임을 취소하는 불필요한 움직임 제거
+                if path and path[-1].endswith("'") and path[-1][0] == move:
+                    continue
+                if path and move.endswith("'") and move[0] == path[-1]:
+                    continue
+
+                # 현재 큐브 상태 백업
+                backup = [
+                    [
+                        [self.cube[f][r][c] for c in range(3)]
+                        for r in range(3)
+                    ]
+                    for f in range(6)
+                ]
+
                 path.append(move)
                 self.rotate(move)
-                
+
                 t = search(g + 1, bound)
-                if t == "FOUND": return "FOUND"
-                if t < min_val: min_val = t
-                
+
+                if t == "FOUND":
+                    return "FOUND"
+
+                if t < min_val:
+                    min_val = t
+
+                # 백트래킹
                 path.pop()
                 self.cube = backup
-                
+
             return min_val
 
+        # IDA* 반복 탐색
         while True:
-            print(f"\n📈 [한계 깊이 확장] 허용 비용 한계치를 {bound:.2f}회 회전으로 설정 후 전면 재탐색")
             t = search(0, bound)
-            if t == "FOUND": return path
-            if t == float('inf'): return None
+
+            if t == "FOUND":
+                return path
+
+            if t == float('inf'):
+                return None
+
             bound = t
 
-    def print_cube(self):
-        print("-" * 30)
-        for i in range(6):
-            print(f"====================\n{self.FACE_NAME[i]}")
-            for row in self.cube[i]:
-                print(" ".join(row))
-        print("-" * 30)
+    def print_cube(self, title="큐브 상태"):
+        print("\n" + "=" * 40)
+        print(f"{title}")
+        print("=" * 40)
 
+        for i in range(6):
+            print(f"\n[{self.FACE_NAME[i]}]")
+            for row in self.cube[i]:
+                print("  " + " ".join(row))
+
+        print("\n" + "=" * 40)
 
 if __name__ == "__main__":
     solver = RealCubeSolver3D()
-    
-    solver.scramble(3) # 연산이 너무 길어지지 않게 우선 3번 믹스
-    print("\n[🔍 섞인 직후 최초 큐브 상태]")
-    solver.print_cube()
-    
-    # 순수 현재 상태만 보고 길 찾기 연산 가동 (로그 폭발 영역)
+
+    # 큐브 섞기
+    solver.scramble(3)
+
+    # 섞인 상태 출력
+    solver.print_cube("섞인 직후 큐브 상태")
+
+    # 풀이 시작 안내
+    print("\n풀이를 탐색하는 중입니다...")
+
+    # IDA* 알고리즘 실행
     solution = solver.solve_ida_star()
-    
-    # 최종 결과 리포트 출력 (이 부분은 위로 밀려나지 않고 맨 아래 박제됩니다)
-    print("\n" + "="*50)
-    print("📊 [최종 결과 분석 보고서]")
-    print("="*50)
-    print(f"🎲 1. 처음에 섞은 공식 (밀림 방지 박제) : {' '.join(solver.secret_scramble)}")
+
+    # 최종 결과 출력
+    print("\n" + "=" * 50)
+    print("최종 결과")
+    print("=" * 50)
+
+    print(f"처음 섞은 공식 : {' '.join(solver.secret_scramble)}")
+
     if solution is not None:
-        print(f"🎉 2. AI가 찾아낸 독자 해법 공식    : {' '.join(solution)}")
-        print(f"🧮 3. 목적지 도달까지 총 연산 상태 수 : {solver.nodes_visited}개")
-        print("\n[✨ 솔버 작동 완료 후 최종 큐브 상태]")
-        solver.print_cube()
+        print(f"찾아낸 해법 공식 : {' '.join(solution)}")
+        print(f"탐색한 상태 수 : {solver.nodes_visited}개")
+
+        solver.print_cube("풀이 완료 후 큐브 상태")
+
     else:
-        print("❌ 풀이를 찾지 못했습니다.")
+        print("풀이를 찾지 못했습니다.")
