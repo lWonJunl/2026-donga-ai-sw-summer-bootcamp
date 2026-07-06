@@ -60,6 +60,7 @@
 | **Libraries**       | Feedparser                 |
 | **Framework**       | *(To be updated)*          |
 | **Server**          | *(To be updated)*          |
+| **Database**        | MySQL                      |
 | **AI(LLM)**         | ChatGPT 5.5, Gemini 3.5    |
 | **IDE**             | Visual Studio Code         |
 | **Version Control** | Git, GitHub                |
