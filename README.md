@@ -30,6 +30,9 @@
 ├── Chapter01-Day04
 ├── Chapter01-Day05
 ├── Chapter02-Day01
+├── Chapter02-Day02
+├── Chapter02-Day03
+├── Chapter02-Day04
 └── (In Progress...)
 ```
 
@@ -43,9 +46,9 @@
 | 01 | 02 | Greedy Algorithm | |
 | 01 | 03 | Graph Algorithm | |
 | 01 | 04 | Dijkstra Algorithm | |
-| 01 | 05 | Mini Project | |
+| 01 | 05 | Mini Project | Group A |
 | 02 | 01 | Database Fundamentals | |
-| 02 | 02 |  | |
+| 02 | 02 | SQL JOIN & UNION | |
 | 02 | 03 |  | |
 | 02 | 04 |  | |
 | 02 | 05 |  | |
