@@ -2,7 +2,7 @@
 -- Table: order_details
 -- Rows: 1000
 -- Purpose: one-table SELECT, subquery, aggregate, derived table, CTE examples.
-use Chapter02Day01;
+
 SET NAMES utf8mb4;
 
 DROP TABLE IF EXISTS order_details;
