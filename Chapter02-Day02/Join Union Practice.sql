@@ -39,3 +39,17 @@ UNION ALL
 SELECT member_id, last_updated_at AS event_at, 'DELIVERY' AS type
 FROM delivery_info
 ORDER BY event_at DESC;
+
+-- GROUP BY
+-- 확장 SQL의 추천 신호 뷰를 사용
+SELECT
+    member_id,
+    category,
+    SUM(score) AS recommend_score,
+    COUNT(*) AS signal_count,
+    GROUP_CONCAT(DISTINCT signal_type) AS reasons
+FROM member_recommendation_signal_v
+GROUP BY member_id, category
+HAVING recommend_score >= 8
+ORDER BY recommend_score DESC, signal_count DESC
+LIMIT 20;
