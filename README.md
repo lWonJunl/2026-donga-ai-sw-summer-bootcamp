@@ -49,7 +49,7 @@
 | 01 | 05 | Mini Project(4 Weeks) Planning | Dong-A Univ. Campus Navigation(Group A) |
 | 02 | 01 | Database Fundamentals | |
 | 02 | 02 | SQL Join & Union | |
-| 02 | 03 |  | |
+| 02 | 03 | DBMS in Modern Services | |
 | 02 | 04 |  | |
 | 02 | 05 |  | |
 
