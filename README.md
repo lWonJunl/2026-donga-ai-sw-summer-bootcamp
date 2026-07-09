@@ -33,6 +33,7 @@
 ├── Chapter02-Day02
 ├── Chapter02-Day03
 ├── Chapter02-Day04
+├── Chapter02-Day05
 └── (In Progress...)
 ```
 
@@ -50,8 +51,8 @@
 | 02 | 01 | Database Fundamentals | |
 | 02 | 02 | SQL Join & Union | |
 | 02 | 03 | DBMS in Modern Services | |
-| 02 | 04 |  | |
-| 02 | 05 |  | |
+| 02 | 04 | Spatial Data with PostgreSQL | |
+| 02 | 05 |  | 💻 Online |
 
 <br>
 
@@ -63,7 +64,7 @@
 | **Libraries**       | Feedparser                 |
 | **Framework**       | *(To be updated)*          |
 | **Server**          | *(To be updated)*          |
-| **Database**        | MySQL                      |
+| **Database**        | MySQL, PostgreSQL          |
 | **AI(LLM)**         | ChatGPT 5.5, Gemini 3.5    |
 | **IDE**             | Visual Studio Code         |
 | **Version Control** | Git, GitHub                |
