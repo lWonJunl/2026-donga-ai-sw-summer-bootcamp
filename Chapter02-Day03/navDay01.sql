@@ -1,4 +1,4 @@
-﻿-- Generated from 데이터베이스 설정.xlsx
+-- Generated from 데이터베이스 설정.xlsx
 -- Source sheets: place_data, road_data
 
 CREATE DATABASE IF NOT EXISTS nav DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

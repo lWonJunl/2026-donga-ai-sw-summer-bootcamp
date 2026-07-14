@@ -54,7 +54,7 @@
 | 02 | 04 | ~~Spatial Data with PostgreSQL~~ Mini Project | |
 | 02 | 05 |  | 💻 Online |
 | 02 | 06 |  | 💻 Online |
-| 03 | 01 | Frontend & Backend | |
+| 03 | 01 | Frontend & Backend Fundamentals | |
 
 <br>
 
