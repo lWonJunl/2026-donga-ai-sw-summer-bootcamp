@@ -34,7 +34,8 @@
 ├── Chapter02-Day03
 ├── Chapter02-Day04
 ├── Chapter02-Day05
-├── Chapter03-Day01
+├── Chapter03-Day03
+├── Chapter03-Day04
 └── (In Progress...)
 ```
 
