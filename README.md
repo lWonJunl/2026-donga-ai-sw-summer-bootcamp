@@ -34,6 +34,7 @@
 ├── Chapter02-Day03
 ├── Chapter02-Day04
 ├── Chapter02-Day05
+├── Chapter03-Day01
 └── (In Progress...)
 ```
 
@@ -51,11 +52,12 @@
 | 02 | 01 | Database Fundamentals | |
 | 02 | 02 | SQL Join & Union | |
 | 02 | 03 | DBMS in Modern Services | |
-| 02 | 04 | ~~Spatial Data with PostgreSQL~~ Mini Project | |
-| 02 | 05 |  | 💻 Online |
-| 02 | 06 |  | 💻 Online |
-| 03 | 01 | Frontend & Backend Fundamentals | |
-
+| 02 | 04 | Mini Project | |
+| ~~02~~ | ~~05~~ |  | ~~💻 Online~~ |
+| ~~03~~ | ~~01~~ |  | ~~💻 Online~~ |
+| 03 | 02 | Frontend & Backend Fundamentals | ❌ No hands-on coding |
+| 03 | 03 | Mini Project |  |
+| 03 | 04 | Web Serivce |  |
 <br>
 
 ## 🛠️ Tech Stack
