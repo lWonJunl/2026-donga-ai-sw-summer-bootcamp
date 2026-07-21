@@ -15,15 +15,18 @@ from urllib.parse import parse_qs, urlparse
 
 
 BASE_DIR = Path(__file__).resolve().parent
-SQL_PATH = BASE_DIR / "navDay03.sql"
+SQL_PATH = BASE_DIR / "navDay04.sql"
 HOST = "127.0.0.1"
 PORT = 8000
 CURRENT_LOCATION_ID = "CURRENT_LOCATION"
 RATE_LIMIT_WINDOW_SECONDS = 10
 RATE_LIMIT_MAX_REQUESTS = 150
+REFRESH_LIMIT_WINDOW_SECONDS = 10
+REFRESH_LIMIT_MAX_REQUESTS = 5
 
 _rate_limit_lock = threading.Lock()
 _request_log: dict[str, deque[float]] = defaultdict(deque)
+_refresh_log: dict[str, deque[float]] = defaultdict(deque)
 
 
 def is_rate_limited(client_ip: str) -> bool:
@@ -33,6 +36,18 @@ def is_rate_limited(client_ip: str) -> bool:
         while timestamps and now - timestamps[0] > RATE_LIMIT_WINDOW_SECONDS:
             timestamps.popleft()
         if len(timestamps) >= RATE_LIMIT_MAX_REQUESTS:
+            return True
+        timestamps.append(now)
+        return False
+
+
+def is_refresh_limited(client_ip: str) -> bool:
+    now = time.monotonic()
+    with _rate_limit_lock:
+        timestamps = _refresh_log[client_ip]
+        while timestamps and now - timestamps[0] > REFRESH_LIMIT_WINDOW_SECONDS:
+            timestamps.popleft()
+        if len(timestamps) >= REFRESH_LIMIT_MAX_REQUESTS:
             return True
         timestamps.append(now)
         return False
@@ -240,7 +255,10 @@ CONNECTED_PLACE_IDS = {
 
 
 def is_representative_place(place_id: str) -> bool:
-    if place_id == "GATE" or re.fullmatch(r"BS\d{2}", place_id):
+    if place_id == "GATE" or re.fullmatch(
+        r"(?:BS\d{2}|PL\d{2}(?:-\d+)?)",
+        place_id,
+    ):
         return True
     match = re.fullmatch(r"S(\d{2})", place_id)
     return bool(match and 1 <= int(match.group(1)) <= 31)
@@ -255,7 +273,10 @@ def representative_sort_key(place_id: str) -> tuple[int, int, str]:
     match = re.fullmatch(r"BS(\d{2})", place_id)
     if match:
         return (2, int(match.group(1)), place_id)
-    return (3, 0, place_id)
+    match = re.fullmatch(r"PL(\d{2})(?:-\d+)?", place_id)
+    if match:
+        return (3, int(match.group(1)), place_id)
+    return (4, 0, place_id)
 
 
 def route_candidates(place_id: str) -> list[str]:
@@ -272,6 +293,16 @@ def route_candidates(place_id: str) -> list[str]:
         for candidate_id in CONNECTED_PLACE_IDS
         if candidate_id.startswith(prefix)
     )
+
+    building_match = re.fullmatch(r"S(\d{2})", place_id)
+    if building_match:
+        elevator_prefix = f"EL{building_match.group(1)}"
+        candidates.extend(
+            candidate_id
+            for candidate_id in CONNECTED_PLACE_IDS
+            if candidate_id == elevator_prefix or candidate_id.startswith(f"{elevator_prefix}-")
+        )
+
     return sorted(set(candidates))
 
 
@@ -295,6 +326,14 @@ def parse_bool(value: str) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def is_elevator_road(road: Road) -> bool:
+    return road.from_place.startswith("EL") or road.to_place.startswith("EL")
+
+
+def has_effective_stairs(road: Road) -> bool:
+    return road.stair and not is_elevator_road(road)
+
+
 def road_cost(
     road: Road,
     weight: str,
@@ -308,7 +347,7 @@ def road_cost(
 
     cost = float(base_cost)
 
-    if travel_mode == "walk" and avoid_stairs and road.stair:
+    if travel_mode == "walk" and avoid_stairs and has_effective_stairs(road):
         cost += 10000
 
     if travel_mode == "walk" and rainy and not road.indoor:
@@ -332,6 +371,30 @@ def road_supports_mode(road: Road, travel_mode: str) -> bool:
 
 def is_parking_place(place_id: str) -> bool:
     return bool(re.fullmatch(r"PL\d+(?:-\d+)?", place_id))
+
+
+def preferred_elevators(start: str, end: str) -> tuple[frozenset[str], bool]:
+    all_elevators = frozenset(
+        place_id for place_id in NAVIGATION_POINTS if place_id.startswith("EL")
+    )
+    return all_elevators, False
+
+
+def elevator_progress(
+    current: str,
+    neighbor: str,
+    used_elevators: int,
+    elevator_entry: str,
+    eligible_elevators: frozenset[str],
+    elevator_bits: dict[str, int],
+) -> tuple[int, str]:
+    if current not in eligible_elevators and neighbor in eligible_elevators:
+        return used_elevators, current
+    if current in eligible_elevators and neighbor not in eligible_elevators:
+        if elevator_entry and neighbor != elevator_entry:
+            used_elevators |= elevator_bits[current]
+        return used_elevators, ""
+    return used_elevators, elevator_entry
 
 
 def build_graph(
@@ -425,6 +488,7 @@ def find_route_segment(
     travel_mode: str = "car",
     avoid_stairs: bool = False,
     rainy: bool = False,
+    prefer_elevator: bool = False,
     current_lat: float | None = None,
     current_lng: float | None = None,
 ) -> dict:
@@ -452,11 +516,45 @@ def find_route_segment(
             "ok": True,
             "total_distance": 0,
             "total_time": 0,
+            "_search_cost": 0,
             "path": [place],
             "steps": [],
             "start": place,
             "end": place,
         }
+
+    baseline_result = None
+    preferred_cost_limit = None
+    if prefer_elevator:
+        baseline_result = find_route_segment(
+            start,
+            end,
+            weight,
+            travel_mode,
+            avoid_stairs,
+            rainy,
+            False,
+            current_lat,
+            current_lng,
+        )
+        if baseline_result.get("ok"):
+            preferred_cost_limit = max(
+                1.0,
+                float(baseline_result.get("_search_cost", 0)),
+            ) * 3
+
+    eligible_elevators, _ = (
+        preferred_elevators(start, end)
+        if prefer_elevator
+        else (frozenset(), False)
+    )
+    elevator_bits = {
+        elevator_id: 1 << index
+        for index, elevator_id in enumerate(sorted(eligible_elevators))
+    }
+    required_elevator_mask = (1 << len(elevator_bits)) - 1
+    require_elevator = required_elevator_mask != 0
+    max_preferred_elevators = 4
 
     start_candidates = (
         nearest_connected_candidates(current_lat, current_lng) if start_is_current else route_candidates(start)
@@ -469,52 +567,170 @@ def find_route_segment(
     if not end_candidates:
         return {"ok": False, "message": "도착 건물과 연결된 출입구 경로가 없습니다."}
 
+    if require_elevator and not start_is_current and len(start_candidates) > 1:
+        representative = PLACES[start]
+        candidates_with_coordinates = [
+            candidate
+            for candidate in start_candidates
+            if NAVIGATION_POINTS[candidate].latitude is not None
+            and NAVIGATION_POINTS[candidate].longitude is not None
+        ]
+        if (
+            representative.latitude is not None
+            and representative.longitude is not None
+            and candidates_with_coordinates
+        ):
+            start_candidates = [
+                min(
+                    candidates_with_coordinates,
+                    key=lambda candidate: haversine_meters(
+                        representative.latitude,
+                        representative.longitude,
+                        NAVIGATION_POINTS[candidate].latitude,
+                        NAVIGATION_POINTS[candidate].longitude,
+                    ),
+                )
+            ]
+
     walk_graph = build_graph(weight, "walk", avoid_stairs, rainy)
     car_graph = build_graph(weight, "car", avoid_stairs, rainy) if travel_mode == "car" else {}
-    queue: list[tuple[float, str, str]] = []
-    start_states: set[tuple[str, str]] = set()
+    queue: list[tuple[float, str, str, int, str]] = []
+    start_states: set[tuple[str, str, int, str]] = set()
 
     for place_id in start_candidates:
+        elevator_entry = "__START__" if place_id in eligible_elevators else ""
         if travel_mode == "walk":
-            start_states.add((place_id, "walk"))
+            start_states.add((place_id, "walk", 0, elevator_entry))
         elif car_graph.get(place_id):
-            start_states.add((place_id, "car_ready@"))
+            start_states.add((place_id, "car_ready@", 0, elevator_entry))
         else:
-            start_states.add((place_id, "access_walk"))
+            start_states.add((place_id, "access_walk", 0, elevator_entry))
 
-    for place_id, phase in start_states:
-        heapq.heappush(queue, (0, place_id, phase))
+    for place_id, phase, used_elevators, elevator_entry in start_states:
+        heapq.heappush(
+            queue,
+            (0, place_id, phase, used_elevators, elevator_entry),
+        )
 
     costs = {state: 0.0 for state in start_states}
     previous: dict[
-        tuple[str, str],
-        tuple[tuple[str, str], Road | None, str | None],
+        tuple[str, str, int, str],
+        tuple[tuple[str, str, int, str], Road | None, str | None],
     ] = {}
     end_candidate_set = set(end_candidates)
-    reached_state: tuple[str, str] | None = None
+    destination_elevators = end_candidate_set & eligible_elevators
+    reached_state: tuple[str, str, int, str] | None = None
+    reached_states: list[tuple[int, float, tuple[str, str, int, str]]] = []
 
     while queue:
-        current_cost, current, phase = heapq.heappop(queue)
-        current_state = (current, phase)
-        phase_kind, _, parking_origin = phase.partition("@")
-        valid_end_phase = travel_mode == "walk" or phase_kind in {"car_moving", "egress_walk"}
-        if current in end_candidate_set and valid_end_phase:
-            reached_state = current_state
-            break
+        current_cost, current, phase, used_elevators, elevator_entry = heapq.heappop(queue)
+        current_state = (current, phase, used_elevators, elevator_entry)
         if current_cost > costs.get(current_state, float("inf")):
             continue
+        if preferred_cost_limit is not None and current_cost > preferred_cost_limit:
+            break
+        phase_kind, _, parking_origin = phase.partition("@")
+        valid_end_phase = travel_mode == "walk" or phase_kind in {"car_moving", "egress_walk"}
+        reached_destination_elevator = current in destination_elevators
+        elevator_requirement_met = (
+            not require_elevator
+            or used_elevators != 0
+            or reached_destination_elevator
+        )
+        at_destination = current in end_candidate_set and valid_end_phase
+        if at_destination:
+            if elevator_requirement_met:
+                elevator_count = used_elevators.bit_count()
+                if (
+                    reached_destination_elevator
+                    and not used_elevators & elevator_bits[current]
+                ):
+                    elevator_count += 1
+                reached_states.append(
+                    (elevator_count, current_cost, current_state)
+                )
 
-        neighbors: list[tuple[float, tuple[str, str], Road | None, str | None]] = []
+        neighbors: list[
+            tuple[float, tuple[str, str, int, str], Road | None, str | None]
+        ] = []
         if phase_kind in {"walk", "access_walk", "egress_walk"}:
             for edge_cost, neighbor, road in walk_graph.get(current, []):
-                neighbors.append((edge_cost, (neighbor, phase), road, "walk"))
+                if at_destination:
+                    if current in destination_elevators:
+                        if neighbor not in end_candidate_set:
+                            continue
+                    elif neighbor not in destination_elevators:
+                        continue
+                if (
+                    neighbor in elevator_bits
+                    and (
+                        used_elevators & elevator_bits[neighbor]
+                        or used_elevators.bit_count() >= max_preferred_elevators
+                    )
+                ):
+                    continue
+                next_used_elevators, next_elevator_entry = elevator_progress(
+                    current,
+                    neighbor,
+                    used_elevators,
+                    elevator_entry,
+                    eligible_elevators,
+                    elevator_bits,
+                )
+                neighbors.append(
+                    (
+                        edge_cost,
+                        (neighbor, phase, next_used_elevators, next_elevator_entry),
+                        road,
+                        "walk",
+                    )
+                )
         if phase_kind in {"car_ready", "car_moving"}:
             for edge_cost, neighbor, road in car_graph.get(current, []):
+                if at_destination:
+                    if current in destination_elevators:
+                        if neighbor not in end_candidate_set:
+                            continue
+                    elif neighbor not in destination_elevators:
+                        continue
+                if (
+                    neighbor in elevator_bits
+                    and (
+                        used_elevators & elevator_bits[neighbor]
+                        or used_elevators.bit_count() >= max_preferred_elevators
+                    )
+                ):
+                    continue
+                next_used_elevators, next_elevator_entry = elevator_progress(
+                    current,
+                    neighbor,
+                    used_elevators,
+                    elevator_entry,
+                    eligible_elevators,
+                    elevator_bits,
+                )
                 neighbors.append(
-                    (edge_cost, (neighbor, f"car_moving@{parking_origin}"), road, "car")
+                    (
+                        edge_cost,
+                        (
+                            neighbor,
+                            f"car_moving@{parking_origin}",
+                            next_used_elevators,
+                            next_elevator_entry,
+                        ),
+                        road,
+                        "car",
+                    )
                 )
         if travel_mode == "car" and phase_kind == "access_walk" and is_parking_place(current):
-            neighbors.append((0, (current, f"car_ready@{current}"), None, None))
+            neighbors.append(
+                (
+                    0,
+                    (current, f"car_ready@{current}", used_elevators, elevator_entry),
+                    None,
+                    None,
+                )
+            )
         can_park = not parking_origin or current != parking_origin
         if (
             travel_mode == "car"
@@ -522,16 +738,40 @@ def find_route_segment(
             and is_parking_place(current)
             and can_park
         ):
-            neighbors.append((0, (current, "egress_walk"), None, None))
+            neighbors.append(
+                (0, (current, "egress_walk", used_elevators, elevator_entry), None, None)
+            )
 
         for edge_cost, next_state, road, edge_mode in neighbors:
             next_cost = current_cost + edge_cost
             if next_cost < costs.get(next_state, float("inf")):
                 costs[next_state] = next_cost
                 previous[next_state] = (current_state, road, edge_mode)
-                heapq.heappush(queue, (next_cost, next_state[0], next_state[1]))
+                heapq.heappush(
+                    queue,
+                    (
+                        next_cost,
+                        next_state[0],
+                        next_state[1],
+                        next_state[2],
+                        next_state[3],
+                    ),
+                )
+
+    if reached_states:
+        reached_state = max(
+            reached_states,
+            key=lambda item: (item[0], -item[1]),
+        )[2]
 
     if reached_state is None:
+        if require_elevator:
+            if baseline_result is not None:
+                return baseline_result
+            return find_route_segment(
+                start, end, weight, travel_mode, avoid_stairs, rainy, False,
+                current_lat, current_lng,
+            )
         return {"ok": False, "message": "연결된 경로를 찾을 수 없습니다."}
 
     route_edges = []
@@ -549,6 +789,7 @@ def find_route_segment(
     for before, after, road, edge_mode in route_edges:
         total_distance += road.distance or 0
         total_time += road.time or 0
+        elevator_road = is_elevator_road(road)
         steps.append(
             {
                 "from": place_to_dict(NAVIGATION_POINTS[before]),
@@ -559,7 +800,8 @@ def find_route_segment(
                 "time": road.time,
                 "twoway": road.twoway,
                 "indoor": road.indoor,
-                "stair": road.stair,
+                "stair": has_effective_stairs(road),
+                "elevator": elevator_road,
                 "slope": road.slope,
                 "curve": road.curve,
             }
@@ -587,6 +829,7 @@ def find_route_segment(
         "ok": True,
         "total_distance": total_distance,
         "total_time": total_time,
+        "_search_cost": costs[reached_state],
         "path": path,
         "steps": steps,
         "start": current_place if start_is_current else place_to_dict(PLACES[start]),
@@ -601,6 +844,7 @@ def find_route(
     travel_mode: str = "car",
     avoid_stairs: bool = False,
     rainy: bool = False,
+    prefer_elevator: bool = False,
     waypoints: list[str] | None = None,
     current_lat: float | None = None,
     current_lng: float | None = None,
@@ -633,6 +877,7 @@ def find_route(
             travel_mode,
             avoid_stairs,
             rainy,
+            prefer_elevator,
             current_lat,
             current_lng,
         )
@@ -858,6 +1103,40 @@ INDEX_HTML = """<!doctype html>
       border-color: var(--blue);
       color: var(--blue);
       outline: none;
+    }
+
+    .panel-toggle.rainbow-easter-egg {
+      border-color: transparent;
+      background: linear-gradient(
+        90deg,
+        #ff4d4d,
+        #ffb84d,
+        #fff04d,
+        #4dcc70,
+        #4da6ff,
+        #8359d9,
+        #ff5ebc,
+        #ff4d4d
+      );
+      background-size: 300% 100%;
+      color: #172033;
+      box-shadow: 0 0 0 2px #fff, 0 0 14px rgb(255 94 188 / 70%);
+      animation: rainbow-button-shift 1.8s linear infinite, rainbow-button-sparkle 900ms ease-in-out infinite alternate;
+    }
+
+    @keyframes rainbow-button-shift {
+      to { background-position: 100% 0; }
+    }
+
+    @keyframes rainbow-button-sparkle {
+      from { box-shadow: 0 0 0 2px #fff, 0 0 8px rgb(77 166 255 / 55%); }
+      to { box-shadow: 0 0 0 2px #fff, 0 0 18px rgb(255 94 188 / 85%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel-toggle.rainbow-easter-egg {
+        animation: none;
+      }
     }
 
     .panel-toggle .chevron {
@@ -1497,6 +1776,10 @@ INDEX_HTML = """<!doctype html>
                 <input type="checkbox" id="rainy" />
                 실내 위주
               </label>
+              <label class="check-option">
+                <input type="checkbox" id="prefer-elevator" />
+                엘리베이터 우선
+              </label>
             </div>
           </div>
         </div>
@@ -1534,7 +1817,7 @@ INDEX_HTML = """<!doctype html>
         <div id="map"></div>
         <div id="map-message" class="map-message"></div>
       </section>
-      <section class="legend">기본 지도에는 대표 건물과 정류장만 표시됩니다. 경로를 검색하면 경로에 포함된 출입구와 교차 지점이 함께 표시됩니다.</section>
+      <section class="legend">현재 S01~S04, S06, S07을 지원중이며, 추후 업데이트 예정입니다. 문의사항 및 버그신고는 2653037@donga.ac.kr로 부탁드립니다.</section>
     </main>
   </div>
 
@@ -1562,11 +1845,16 @@ INDEX_HTML = """<!doctype html>
     const travelModeButtons = [...document.querySelectorAll("[data-travel-mode]")];
     const avoidStairsInput = document.querySelector("#avoid-stairs");
     const rainyInput = document.querySelector("#rainy");
+    const preferElevatorInput = document.querySelector("#prefer-elevator");
     let places = [];
     let mapPlaces = [];
     let roads = [];
     let selectedWeight = "distance";
     let selectedTravelMode = "car";
+    let swapCount = 0;
+    let controlsToggleCount = 0;
+    let routePanelToggleCount = 0;
+    const easterEggSounds = Array.from("스왑버튼을대체몇번을누르는거야으아악아악아악아악");
     let currentRoute = null;
     let map = null;
     let markers = [];
@@ -1603,20 +1891,8 @@ INDEX_HTML = """<!doctype html>
       return text.toUpperCase().split(/\\s+/)[0] || "";
     }
 
-    function placeMatches(place, query) {
-      const text = query.trim().toUpperCase();
-      if (!text) return true;
-      return (
-        place.id.toUpperCase().includes(text) ||
-        place.name.toUpperCase().includes(text) ||
-        (place.aliases || []).some(alias => alias.toUpperCase().includes(text))
-      );
-    }
-
     function renderSuggestions(input, container) {
-      const matches = [currentLocationOption, ...places]
-        .filter(place => placeMatches(place, input.value))
-        .slice(0, 12);
+      const matches = [currentLocationOption, ...places];
       container.innerHTML = matches.map(place => `
         <button type="button" class="suggestion" data-place-id="${place.id}" data-place-label="${place.name}">
           <strong>${place.id}</strong>
@@ -1650,6 +1926,7 @@ INDEX_HTML = """<!doctype html>
     }
 
     function createWaypointInput() {
+      const waypointNumber = waypointsEl.querySelectorAll(".waypoint-row").length + 1;
       const row = document.createElement("div");
       row.className = "waypoint-row";
       row.innerHTML = `
@@ -1665,7 +1942,13 @@ INDEX_HTML = """<!doctype html>
       setupSearchInput(input, suggestions);
       removeButton.addEventListener("click", () => row.remove());
       waypointsEl.appendChild(row);
+      if (waypointNumber >= 4) {
+        input.value = "대체 얼마나 더 경유를 하실려고요?";
+      }
       input.focus();
+      if (waypointNumber >= 4) {
+        input.select();
+      }
     }
 
     function getWaypointCodes() {
@@ -1700,6 +1983,12 @@ INDEX_HTML = """<!doctype html>
       endSelect.value = startValue;
       startSuggestions.classList.remove("show");
       endSuggestions.classList.remove("show");
+
+      swapCount += 1;
+      if (swapCount === 10) {
+        easterEggSounds.forEach(sound => window.alert(sound));
+        swapCount = 0;
+      }
     }
 
     async function loadData() {
@@ -1858,14 +2147,21 @@ INDEX_HTML = """<!doctype html>
         const relatedStep = routeSteps[Math.min(index, routeSteps.length - 1)];
         const pointMode = relatedStep?.travel_mode
           || (relatedStep?.road_type === "차량" ? "car" : "walk");
+        const isElevator = place.id.startsWith("EL");
         const pointColor = pointMode === "car" ? "#2563eb" : "#16a34a";
+        const featureIcon = isElevator ? "↕" : "";
+        const featureTitle = isElevator ? "엘리베이터" : "";
+        const featureColor = "#7c3aed";
+        const featureBadge = featureIcon
+          ? `<span title="${featureTitle}" aria-label="${featureTitle}" style="position:absolute;top:-9px;right:-9px;width:16px;height:16px;border:2px solid ${featureColor};border-radius:50%;background:#fff;color:${featureColor};display:grid;place-items:center;font-size:10px;font-weight:900;line-height:1;box-shadow:0 2px 5px rgba(0,0,0,.2);">${featureIcon}</span>`
+          : "";
 
         const label = new kakao.maps.CustomOverlay({
           map,
           position: latLng(place),
           xAnchor: 0.5,
           yAnchor: 0.5,
-          content: `<div style="transform:translateX(${offset}px);width:26px;height:26px;border-radius:999px;background:${pointColor};color:#fff;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.22);font-size:13px;font-weight:700;border:2px solid #fff;">${index + 1}</div>`,
+          content: `<div style="position:relative;transform:translateX(${offset}px);width:26px;height:26px;border-radius:999px;background:${pointColor};color:#fff;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.22);font-size:13px;font-weight:700;border:2px solid #fff;">${index + 1}${featureBadge}</div>`,
         });
         routeLabels.push(label);
       });
@@ -1949,6 +2245,7 @@ INDEX_HTML = """<!doctype html>
         travel_mode: selectedTravelMode,
         avoid_stairs: avoidStairsInput.checked ? "1" : "0",
         rainy: rainyInput.checked ? "1" : "0",
+        prefer_elevator: preferElevatorInput.checked ? "1" : "0",
       });
       if (waypoints.length) {
         params.set("waypoints", waypoints.join(","));
@@ -1991,7 +2288,7 @@ INDEX_HTML = """<!doctype html>
             <div class="step-meta">
               <span class="chip">거리 ${step.distance ?? "-"}m</span>
               <span class="chip">시간 ${formatDuration(step.time)}</span>
-              <span class="chip ${step.stair ? "on" : ""}">${step.stair ? "계단 있음" : "계단 없음"}</span>
+              <span class="chip ${step.elevator || step.stair ? "on" : ""}">${step.elevator ? "엘리베이터" : step.stair ? "계단 있음" : "계단 없음"}</span>
               <span class="chip ${step.indoor ? "on" : ""}">${step.indoor ? "실내" : "실외"}</span>
             </div>
           </div>
@@ -2073,11 +2370,19 @@ INDEX_HTML = """<!doctype html>
       const collapsed = controlsEl.classList.toggle("collapsed");
       toggleControlsButton.textContent = collapsed ? "▼" : "▲";
       toggleControlsButton.setAttribute("aria-expanded", String(!collapsed));
+      controlsToggleCount += 1;
+      if (controlsToggleCount === 10) {
+        toggleControlsButton.classList.add("rainbow-easter-egg");
+      }
     });
 
     toggleRoutePanelButton.addEventListener("click", () => {
       const collapsed = appEl.classList.toggle("route-collapsed");
       toggleRoutePanelButton.setAttribute("aria-expanded", String(!collapsed));
+      routePanelToggleCount += 1;
+      if (routePanelToggleCount === 10) {
+        toggleRoutePanelButton.classList.add("rainbow-easter-egg");
+      }
       relayoutMapSoon();
     });
 
@@ -2136,14 +2441,18 @@ class NavigationHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def do_GET(self) -> None:
-        if is_rate_limited(self.client_address[0]):
-            self.send_response(429)
-            self.send_header("Retry-After", str(RATE_LIMIT_WINDOW_SECONDS))
-            self.send_header("Content-Length", "0")
-            self.end_headers()
+        parsed = urlparse(self.path)
+
+        if parsed.path == "/" and is_refresh_limited(self.client_address[0]):
+            self.send_rate_limit(
+                REFRESH_LIMIT_WINDOW_SECONDS,
+                "새로고침 요청이 너무 많습니다. 10초 후 다시 시도하세요.",
+            )
             return
 
-        parsed = urlparse(self.path)
+        if is_rate_limited(self.client_address[0]):
+            self.send_rate_limit(RATE_LIMIT_WINDOW_SECONDS, "요청이 너무 많습니다.")
+            return
 
         if parsed.path == "/":
             self.send_text(render_index_html(), "text/html; charset=utf-8")
@@ -2169,6 +2478,7 @@ class NavigationHandler(BaseHTTPRequestHandler):
             travel_mode = query.get("travel_mode", ["car"])[0]
             avoid_stairs = parse_bool(query.get("avoid_stairs", ["0"])[0])
             rainy = parse_bool(query.get("rainy", ["0"])[0])
+            prefer_elevator = parse_bool(query.get("prefer_elevator", ["0"])[0])
             waypoints = [
                 item
                 for item in query.get("waypoints", [""])[0].split(",")
@@ -2186,6 +2496,7 @@ class NavigationHandler(BaseHTTPRequestHandler):
                     travel_mode,
                     avoid_stairs,
                     rainy,
+                    prefer_elevator,
                     waypoints,
                     current_lat,
                     current_lng,
@@ -2199,12 +2510,22 @@ class NavigationHandler(BaseHTTPRequestHandler):
         encoded = body.encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
 
     def send_json(self, data) -> None:
         self.send_text(json.dumps(data, ensure_ascii=False), "application/json; charset=utf-8")
+
+    def send_rate_limit(self, retry_after: int, message: str) -> None:
+        encoded = message.encode("utf-8")
+        self.send_response(429)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Retry-After", str(retry_after))
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
 
     def log_message(self, format: str, *args) -> None:
         print(f"[nav] {self.address_string()} - {format % args}")
