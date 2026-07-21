@@ -63,7 +63,7 @@
 | 03 | 04 | Web Service |  |
 | ~~03~~ | ~~05~~ |  | ~~💻 Online~~ |
 | ~~04~~ | ~~01~~ |  | ~~💻 Online~~ |
-| 04 | 02 | Data Collection & Data Structures | |
+| 04 | 02 | Django Fundamentals & Server Setup | |
 | 04 | 03 |  | |
 | 04 | 04 |  | 🍽️ Networking |
 | ~~04~~ | ~~05~~ |  | ~~💻 Online~~ |
@@ -80,6 +80,7 @@
 | :-- | :-- |
 | **Languages** | Python, SQL, HTML, CSS, JavaScript |
 | **Python Libraries** | Feedparser, OpenCV, NumPy, NetworkX, Matplotlib |
+| **Web Framework** | Django |
 | **Web Server** | Python Standard Library (`http.server`) |
 | **Database** | MySQL |
 | **Algorithms** | Dynamic Programming, Greedy, BFS, DFS, Dijkstra |
@@ -101,6 +102,11 @@
 
 * MySQL에서 `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, `UNION` 등의 기본 쿼리를 실습했습니다.
 * 캠퍼스 길찾기에 필요한 장소, 도로 및 경유지 데이터를 관계형 테이블과 SQL 시드 데이터로 구성했습니다.
+
+### Django Practice
+
+* Linux 환경에서 Python과 Django를 설치하고 기본 프로젝트를 생성했습니다.
+* `ALLOWED_HOSTS`와 방화벽을 설정하고 외부에서 Django 개발 서버에 접속하는 과정을 실습했습니다.
 
 ### Campus Navigation Mini Project
 
