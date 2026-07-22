@@ -16,7 +16,7 @@
 
 ## 관련 파일
 
-- [Python 소스](../../Chapter01-Day03/Cube.py)
+- [Python 소스](Cube.py)
 
 ## 배운 점
 

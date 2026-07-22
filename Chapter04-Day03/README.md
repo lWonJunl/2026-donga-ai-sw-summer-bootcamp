@@ -16,10 +16,10 @@
 
 ## 관련 파일
 
-- [Django view와 콘텐츠](../../Chapter04-Day03/portfolio/views.py)
-- [메인 템플릿](../../Chapter04-Day03/templates/home.html)
-- [스타일시트](../../Chapter04-Day03/static/css/style.css)
-- [인터랙션 스크립트](../../Chapter04-Day03/static/js/main.js)
+- [Django view와 콘텐츠](portfolio/views.py)
+- [메인 템플릿](templates/home.html)
+- [스타일시트](static/css/style.css)
+- [인터랙션 스크립트](static/js/main.js)
 
 ## 배운 점
 

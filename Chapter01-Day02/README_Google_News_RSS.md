@@ -15,7 +15,7 @@
 
 ## 관련 파일
 
-- [Python 소스](../../Chapter01-Day02/MiniProject-RecommandNews.py)
+- [Python 소스](MiniProject-RecommandNews.py)
 
 ## 배운 점
 

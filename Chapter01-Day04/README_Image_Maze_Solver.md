@@ -16,8 +16,8 @@
 
 ## 관련 파일
 
-- [격자 기반 구현](../../Chapter01-Day03/Maze1.py)
-- [픽셀 기반 구현](../../Chapter01-Day04/Maze2.py)
+- [격자 기반 구현](../Chapter01-Day03/Maze1.py)
+- [픽셀 기반 구현](Maze2.py)
 
 ## 배운 점
 
