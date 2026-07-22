@@ -64,7 +64,7 @@
 | ~~03~~ | ~~05~~ |  | ~~💻 Online~~ |
 | ~~04~~ | ~~01~~ |  | ~~💻 Online~~ |
 | 04 | 02 | Django Fundamentals & Server Setup | |
-| 04 | 03 |  | |
+| 04 | 03 | Portfolio Mini project | 💻 Online |
 | 04 | 04 |  | 🍽️ Networking |
 | ~~04~~ | ~~05~~ |  | ~~💻 Online~~ |
 | ~~05~~ | ~~01~~ |  | ~~💻 Online~~ |
