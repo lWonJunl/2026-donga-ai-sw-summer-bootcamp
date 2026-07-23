@@ -65,7 +65,7 @@
 | ~~04~~ | ~~01~~ |  | ~~💻 Online~~ |
 | 04 | 02 | Django Fundamentals & Server Setup | |
 | 04 | 03 | Portfolio Mini project | 💻 Online |
-| 04 | 04 |  | 🍽️ Networking |
+| 04 | 04 | Django Portfolio API & Authentication | 🍽️ Networking |
 | ~~04~~ | ~~05~~ |  | ~~💻 Online~~ |
 | ~~05~~ | ~~01~~ |  | ~~💻 Online~~ |
 | ~~05~~ | ~~02~~ |  | ~~💻 Online~~ |
@@ -80,9 +80,10 @@
 | :-- | :-- |
 | **Languages** | Python, SQL, HTML, CSS, JavaScript |
 | **Python Libraries** | Feedparser, OpenCV, NumPy, NetworkX, Matplotlib |
-| **Web Framework** | Django |
+| **Web Framework** | Django 4.2, django-allauth |
 | **Web Server** | Python Standard Library (`http.server`) |
-| **Database** | MySQL |
+| **Database** | MySQL, SQLite |
+| **API** | JSON, Django `JsonResponse`, Fetch API |
 | **Algorithms** | Dynamic Programming, Greedy, BFS, DFS, Dijkstra |
 | **External Services** | Google News RSS, Kakao Maps JavaScript API |
 | **AI (LLM)** | Codex, Gemini |
@@ -107,6 +108,16 @@
 
 * Linux 환경에서 Python과 Django를 설치하고 기본 프로젝트를 생성했습니다.
 * `ALLOWED_HOSTS`와 방화벽을 설정하고 외부에서 Django 개발 서버에 접속하는 과정을 실습했습니다.
+* UTF-8 텍스트 파일을 읽어 목록·상세 조회와 검색·분류·언어 필터를 제공하는 JSON API를 구현했습니다.
+* Django 세션 인증과 `django-allauth`를 연결해 회원가입, 이메일 인증, 로그인 및 계정 관리 기능을 구성했습니다.
+* 인증 상태에 따른 HTTP 응답, 보안 헤더, 요청 제한 및 캐시 정책을 테스트로 검증했습니다.
+
+### Portfolio API Mini Project
+
+* 기존 개인 포트폴리오에 Django 기반의 인증된 프로젝트 API를 연결했습니다.
+* JavaScript Fetch API를 사용해 필터링된 JSON 응답과 프로젝트 카드를 화면에 표시했습니다.
+* 운영 환경의 비밀키, 허용 호스트, HTTPS 및 이메일 서버 설정을 환경변수로 분리했습니다.
+* 자세한 구현 내용과 실행 방법은 [`Portfolio_API.md`](Chapter04-Day04/Portfolio_API.md)에서 확인할 수 있습니다.
 
 ### Campus Navigation Mini Project
 
