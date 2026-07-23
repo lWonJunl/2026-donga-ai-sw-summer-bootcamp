@@ -7,3 +7,10 @@
 __pycache__/
 *.py[cod]
 
+# Local Django portfolio implementation; documentation may be published
+/Chapter04-Day03/*
+!/Chapter04-Day03/Portfolio.md
+
+# Local authenticated portfolio API; public documentation only
+/Chapter04-Day04/*
+!/Chapter04-Day04/Portfolio_API.md
