@@ -6,11 +6,20 @@
 # Python generated files
 __pycache__/
 *.py[cod]
+.venv/
+venv/
 
-# Local Django portfolio implementation; documentation may be published
-/Chapter04-Day03/*
-!/Chapter04-Day03/Portfolio.md
+# Local databases, collected assets, logs, and editor backups
+*.sqlite3
+*.sqlite3-*
+*.log
+*.bak.*
+staticfiles/
+media/
+.coverage
+.pytest_cache/
+.DS_Store
+Thumbs.db
 
-# Local authenticated portfolio API; public documentation only
-/Chapter04-Day04/*
-!/Chapter04-Day04/Portfolio_API.md
+# Day 3 and Day 4 source code is safe to publish. Secrets must stay in ignored
+# .env files; use each project's .env.example as a variable reference.

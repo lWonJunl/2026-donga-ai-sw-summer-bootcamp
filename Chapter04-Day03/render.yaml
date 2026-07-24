@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: wonjun-portfolio
+    runtime: python
+    plan: free
+    rootDir: Chapter04-Day03
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn portfolio.wsgi:application
+    healthCheckPath: /
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_HSTS_SECONDS
+        value: "3600"
+      - key: PYTHON_VERSION
+        value: 3.12.4

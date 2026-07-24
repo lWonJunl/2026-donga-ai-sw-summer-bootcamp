@@ -28,6 +28,8 @@ Python과 Django로 콘텐츠를 구성하고 HTML, CSS, JavaScript를 연결해
 Chapter04-Day03
 ├── manage.py
 ├── Portfolio.md
+├── requirements.txt
+├── render.yaml
 ├── portfolio
 │   ├── __init__.py
 │   ├── asgi.py
@@ -125,7 +127,7 @@ Rendered Portfolio Page
 프로젝트 디렉터리에서 가상환경을 만들고 Django를 설치합니다.
 
 ```bash
-cd /home/portfolio-project/protfolio
+cd /path/to/Chapter04-Day03
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install django
@@ -138,6 +140,102 @@ python manage.py runserver 0.0.0.0:8000
 
 <br>
 
+## ☁️ Deploy on Render
+
+`portfolio-website`와 같이 Render Blueprint을 사용해 Django 포트폴리오를 배포할 수 있습니다.
+
+### 1. Deployment dependencies
+
+`requirements.txt`에 Django, Gunicorn, WhiteNoise를 추가합니다.
+
+```text
+Django==5.2.16
+gunicorn>=21,<24
+whitenoise>=6,<7
+```
+
+Gunicorn은 Render의 운영용 WSGI 서버로 사용하고, WhiteNoise는 Django의 정적 파일을 제공합니다.
+
+### 2. Render Blueprint
+
+프로젝트 루트에 `render.yaml`을 작성합니다.
+
+```yaml
+services:
+  - type: web
+    name: wonjun-portfolio
+    runtime: python
+    plan: free
+    rootDir: Chapter04-Day03
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn portfolio.wsgi:application
+    healthCheckPath: /
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_HSTS_SECONDS
+        value: "3600"
+      - key: PYTHON_VERSION
+        value: 3.12.4
+```
+
+### 3. Django production settings
+
+`portfolio/settings.py`에서 운영 설정을 환경 변수로 분리하고 WhiteNoise를 활성화합니다.
+
+```python
+import os
+
+from django.core.exceptions import ImproperlyConfigured
+from django.core.management.utils import get_random_secret_key
+
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set in production.")
+    SECRET_KEY = get_random_secret_key()
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost"
+    ).split(",")
+    if host.strip()
+]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    # existing middleware...
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+```
+
+### 4. Deploy
+
+1. 프로젝트를 GitHub 저장소에 push합니다.
+2. Render Dashboard에서 **New > Blueprint**를 선택합니다.
+3. GitHub 저장소를 연결하고 `render.yaml`을 인식시켜 서비스를 생성합니다.
+4. 빌드가 끝나면 Render가 제공한 `https://<service-name>.onrender.com` 주소에서 배포 결과를 확인합니다.
+
+> `DJANGO_SECRET_KEY`는 GitHub에 올리지 않고 Render에서 생성·관리합니다. 실제 운영 환경에서는 `DEBUG=False`를 유지합니다.
+
+Render에서는 자동으로 제공되는 `RENDER_EXTERNAL_HOSTNAME`과 `RENDER_EXTERNAL_URL`만 `ALLOWED_HOSTS`와 `CSRF_TRUSTED_ORIGINS`에 추가합니다. 전체 `.onrender.com` 도메인을 와일드카드로 허용하지 않습니다.
+
+<br>
+
 ## 🗂️ Key Files
 
 | File | Role |
@@ -145,6 +243,8 @@ python manage.py runserver 0.0.0.0:8000
 | [`portfolio/views.py`](portfolio/views.py) | 프로필, 프로젝트, Journey, 번역 데이터와 렌더링 로직 |
 | [`portfolio/urls.py`](portfolio/urls.py) | 홈 화면과 Django 관리자 URL 연결 |
 | [`portfolio/settings.py`](portfolio/settings.py) | 템플릿, 정적 파일, 언어와 시간대 등 프로젝트 설정 |
+| [`requirements.txt`](requirements.txt) | Render 빌드에 필요한 Django, Gunicorn, WhiteNoise 의존성 |
+| [`render.yaml`](render.yaml) | Render 빌드·실행 명령과 운영 환경 변수 정의 |
 | [`templates/home.html`](templates/home.html) | 포트폴리오 페이지의 HTML 구조와 Django 템플릿 출력 |
 | [`static/css/style.css`](static/css/style.css) | 색상, 타이포그래피, 반응형 레이아웃과 테마 |
 | [`static/js/main.js`](static/js/main.js) | 테마, 모바일 메뉴, 필터, 애니메이션과 맨 위 이동 기능 |
