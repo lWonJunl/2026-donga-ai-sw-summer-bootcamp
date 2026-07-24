@@ -1,0 +1,42 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Choi WonJun API</title>
+  <link rel="stylesheet" href="{% static 'css/api.css' %}">
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body>
+  <header class="api-header">
+    <a class="brand" href="{% url 'home' %}">WONJUN</a>
+    <span>AUTHENTICATED API</span>
+    <a href="{% url 'api_page' %}">API ↗</a>
+  </header>
+  <main class="auth-main">
+    <section class="auth-card">
+      <p class="eyebrow">{% block eyebrow %}{% endblock %}</p>
+      <h1>{% block heading %}{% endblock %}</h1>
+      {% if request.GET.reason == "authentication_required" %}
+        <div class="auth-notice" role="alert">로그인이 필요한 서비스입니다. 로그인 후 요청한 페이지로 이동합니다.</div>
+      {% endif %}
+      {% block content %}
+      <form method="post" class="auth-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+          <label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}</label>
+          {% if field.help_text %}<small>{{ field.help_text|safe }}</small>{% endif %}
+          {% if field.errors %}<div class="form-errors">{{ field.errors }}</div>{% endif %}
+        {% endfor %}
+        <button type="submit">{% block submit %}{% endblock %}</button>
+      </form>
+      {% block social %}{% endblock %}
+      <p class="auth-alternate">{% block alternate %}{% endblock %}</p>
+      {% endblock %}
+    </section>
+  </main>
+</body>
+</html>

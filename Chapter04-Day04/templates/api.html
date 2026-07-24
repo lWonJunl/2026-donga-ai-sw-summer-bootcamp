@@ -1,0 +1,77 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="텍스트 파일 기반 Django 프로젝트 API">
+  <title>Projects API · Choi WonJun</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans+KR:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/api.css' %}?v=20260723143415">
+  <script src="{% static 'js/api.js' %}?v=20260723143415" defer></script>
+</head>
+<body data-list-url="{% url 'api_projects' %}">
+  <header class="api-header">
+    <a class="brand" href="{% url 'home' %}">WONJUN</a>
+    <span>TEXT FILE → DJANGO → JSON</span>
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<a href="{% url 'profile' %}">{{ user.username }} · My Page</a> <button type="submit">Logout</button></form>
+    {% else %}
+      <a href="{% url 'login' %}?next={% url 'api_page' %}">Login ↗</a>
+    {% endif %}
+  </header>
+
+  <main>
+    <section class="api-hero">
+      <p class="eyebrow">DJANGO REST-STYLE API</p>
+      <h1>Text File<br><em>Projects API</em></h1>
+      <p class="lead"><code>data/projects.txt</code>를 읽어 프로젝트 정보를 JSON으로 반환합니다. 데이터베이스 없이 텍스트 파일을 데이터 원본으로 사용하는 실습입니다.</p>
+      <p class="lead">데이터 API는 인증 사용자만 호출할 수 있습니다. <a href="{% url 'login' %}?next={% url 'api_page' %}">로그인</a>하거나 <a href="{% url 'register' %}?next={% url 'api_page' %}&amp;intent=register">회원가입</a>하세요.</p>
+      <div class="endpoint"><b>GET</b><code>/api/projects/</code></div>
+    </section>
+
+    <section class="console" aria-labelledby="console-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">TRY IT</p><h2 id="console-title">API 요청</h2></div>
+        <p id="api-status" role="status" aria-live="polite">요청 준비</p>
+      </div>
+
+      <form id="api-form">
+        <label>Category<select id="api-category"><option value="">All</option></select></label>
+        <label>Language<select id="api-language"><option value="all">한국어 + English</option><option value="ko">한국어</option><option value="en">English</option></select></label>
+        <label>Search<input id="api-keyword" type="search" placeholder="Python, Django..." autocomplete="off"></label>
+        <button type="submit">Send Request</button>
+      </form>
+
+      <div class="request-line"><span>Request</span><code id="api-request-url"></code></div>
+      <pre id="api-response" tabindex="0">Loading...</pre>
+    </section>
+
+    <section class="results" aria-labelledby="results-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">RESPONSE DATA</p><h2 id="results-title">프로젝트</h2></div>
+        <p><strong id="api-count">0</strong> records</p>
+      </div>
+      <div id="api-projects" class="project-list"></div>
+    </section>
+
+    <section class="guide" aria-labelledby="guide-title">
+      <p class="eyebrow">ENDPOINTS</p>
+      <h2 id="guide-title">API Guide</h2>
+      <div class="guide-grid">
+        <article><code>GET /api/health/</code><p>API와 텍스트 데이터 파일 상태를 확인합니다.</p></article>
+        <article><code>GET /api/portfolio/</code><p>프로필, 기술, 프로젝트와 성장 과정 등 포트폴리오 전체를 JSON으로 반환합니다.</p></article>
+        <article><code>GET /api/projects/</code><p>프로젝트 전체 목록과 필터 결과를 반환합니다.</p></article>
+        <article><code>GET /api/projects/1/</code><p>ID가 1인 프로젝트 하나를 반환합니다.</p></article>
+        <article><code>?lang=ko</code><p>제목과 설명을 한국어 문자열로 반환합니다.</p></article>
+        <article><code>?category=Web</code><p>선택한 분류의 프로젝트만 반환합니다.</p></article>
+        <article><code>?q=Python</code><p>제목, 설명과 기술을 검색합니다.</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer><span>Choi WonJun · Chapter04-Day04</span><a href="{% url 'api_projects' %}">Raw JSON ↗</a></footer>
+</body>
+</html>

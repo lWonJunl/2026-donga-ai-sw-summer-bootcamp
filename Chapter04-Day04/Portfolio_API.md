@@ -1,5 +1,7 @@
 # 🔐 Django Portfolio Text API
 
+> **API 연습용 프로젝트입니다.** Django에서 JSON API를 만들고, 인증·요청·응답·필터링 흐름을 실습하기 위해 작성했습니다.
+
 > 기존 개인 포트폴리오에 텍스트 파일 기반 JSON API와 이메일 인증을 포함한 Django 계정 시스템을 연결한 프로젝트입니다.
 
 본 프로젝트는 **2026 DongA AI·SW Summer Bootcamp**의 Django API 실습으로 제작했습니다.
@@ -14,7 +16,7 @@
 | :-- | :-- |
 | **Project** | Authenticated Portfolio Text API |
 | **Program** | 2026 DongA AI·SW Summer Bootcamp |
-| **Framework** | Django 4.2 |
+| **Framework** | Django 5.2 LTS |
 | **Data Source** | UTF-8 tab-separated text file |
 | **API Format** | JSON |
 | **Authentication** | Django Session Authentication, django-allauth |
@@ -30,7 +32,10 @@
 Chapter04-Day04
 ├── manage.py
 ├── Portfolio_API.md
-├── db.sqlite3                  # local user/session database
+├── .env.example               # secret-free environment variable template
+├── requirements.txt
+├── SECURITY.md
+├── SOCIAL_LOGIN_SETUP.md
 ├── data
 │   └── projects.txt            # API source data
 ├── portfolio
@@ -61,7 +66,7 @@ Chapter04-Day04
         └── api.js
 ```
 
-백업파일과 Python 캐시는 위 구조에서 생략했습니다.
+`db.sqlite3`, 백업파일과 Python 캐시는 개인정보·보안 및 재생성을 위해 Git 공개 대상에서 제외합니다.
 
 <br>
 
@@ -203,7 +208,7 @@ python manage.py test portfolio
 | Category | Stack |
 | :-- | :-- |
 | **Language** | Python |
-| **Web Framework** | Django 4.2 |
+| **Web Framework** | Django 5.2 LTS |
 | **API Response** | Django `JsonResponse` |
 | **Text Parser** | Python `csv.DictReader` |
 | **Authentication** | Django Auth, django-allauth, Session, CSRF |
@@ -220,7 +225,7 @@ python manage.py test portfolio
 cd /path/to/Chapter04-Day04
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install "Django==4.2.30" django-allauth
+python -m pip install -r requirements.txt
 
 python manage.py migrate
 python manage.py check
@@ -254,11 +259,12 @@ export DJANGO_DEFAULT_FROM_EMAIL='no-reply@example.com'
 ## 🔒 Security & Publication
 
 * `db.sqlite3`에는 가입한 사용자 정보가 저장되므로 GitHub에 올리지 않습니다.
-* Django 코드, 텍스트 데이터, HTML/CSS/JavaScript와 백업파일도 공개 저장소에서 제외합니다.
-* GitHub에는 구현 설명 문서인 `Portfolio_API.md`만 공개합니다.
+* Django 코드, 텍스트 데이터, HTML/CSS/JavaScript와 보안 문서는 실제 비밀값 없이 GitHub에 공개합니다.
+* `.env`, 백업파일, Python 캐시, 로그와 사용자 DB는 `.gitignore`로 제외하고 `.env.example`에는 변수 이름만 제공합니다.
 * 운영용 `SECRET_KEY`는 환경변수로 분리하고 공개된 키는 사용하지 않습니다.
 * 운영 환경에서는 `DEBUG=False`와 제한된 `ALLOWED_HOSTS`를 사용합니다.
 * SMTP 비밀번호와 OAuth Client Secret도 환경변수로 관리합니다.
+* 회원가입·로그인 POST 데이터는 오류 보고에서 숨기고, 이메일 인증·계정 열거 방지·요청 제한을 적용합니다.
 
 <br>
 

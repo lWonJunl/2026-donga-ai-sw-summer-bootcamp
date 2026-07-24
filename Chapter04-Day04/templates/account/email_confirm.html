@@ -1,0 +1,10 @@
+{% extends "auth/base.html" %}
+{% block title %}이메일 확인{% endblock %}
+{% block eyebrow %}CONFIRM EMAIL{% endblock %}
+{% block heading %}이메일 확인{% endblock %}
+{% block content %}
+  {% if confirmation %}
+    <p class="auth-message"><strong>{{ confirmation.email_address.email }}</strong> 주소를 인증하시겠습니까?</p>
+    <form method="post" class="auth-form">{% csrf_token %}<button type="submit">이메일 인증 완료</button></form>
+  {% else %}<p class="auth-message">인증 링크가 만료됐거나 유효하지 않습니다.</p>{% endif %}
+{% endblock %}

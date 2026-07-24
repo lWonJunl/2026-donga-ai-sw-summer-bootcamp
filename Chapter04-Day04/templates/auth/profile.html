@@ -1,0 +1,25 @@
+{% extends "auth/base.html" %}
+{% block title %}마이페이지{% endblock %}
+{% block eyebrow %}MY ACCOUNT{% endblock %}
+{% block heading %}마이페이지{% endblock %}
+{% block content %}
+  <form method="post" class="auth-form">
+    {% csrf_token %}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}{{ field }}</label>
+      {% if field.errors %}<div class="form-errors">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+    <button type="submit">정보 저장</button>
+  </form>
+  <section class="account-section">
+    <h2>이메일</h2>
+    {% for address in email_addresses %}
+      <p>{{ address.email }} · {% if address.verified %}인증됨{% else %}인증 대기{% endif %}{% if address.primary %} · 기본{% endif %}</p>
+    {% empty %}<p>등록된 이메일이 없습니다.</p>{% endfor %}
+    <a class="account-action" href="{% url 'account_email' %}">이메일 변경 및 인증</a>
+  </section>
+  <section class="account-section">
+    <h2>보안</h2>
+    <a class="account-action" href="{% url 'account_change_password' %}">비밀번호 변경</a>
+  </section>
+{% endblock %}

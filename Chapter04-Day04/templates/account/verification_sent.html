@@ -1,0 +1,5 @@
+{% extends "auth/base.html" %}
+{% block title %}이메일 인증{% endblock %}
+{% block eyebrow %}VERIFY EMAIL{% endblock %}
+{% block heading %}인증 메일을 보냈습니다{% endblock %}
+{% block content %}<p class="auth-message">메일의 인증 링크를 열어 회원가입을 완료해 주세요. 인증 전에는 로그인할 수 없습니다.</p><p class="auth-alternate"><a href="{% url 'login' %}">로그인으로 돌아가기</a></p>{% endblock %}
