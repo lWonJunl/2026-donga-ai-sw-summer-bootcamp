@@ -1,0 +1,45 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}과제신호등{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'tracker/style.css' %}?v=20260804-23">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="{% if user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'landing' %}{% endif %}">
+                <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span>과제신호등</span>
+            </a>
+            <nav>
+                {% if user.is_authenticated %}
+                    <a class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}" href="{% url 'dashboard' %}"{% if request.resolver_match.url_name == 'dashboard' %} aria-current="page"{% endif %}>대시보드</a>
+                    <a class="nav-link{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'group_detail' or request.resolver_match.url_name == 'group_manage' %} active{% endif %}" href="{% url 'courses' %}"{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'group_detail' or request.resolver_match.url_name == 'group_manage' %} aria-current="page"{% endif %}>내 과목</a>
+                    <a class="nav-link{% if request.resolver_match.url_name == 'guide' %} active{% endif %}" href="{% url 'guide' %}"{% if request.resolver_match.url_name == 'guide' %} aria-current="page"{% endif %}>이용 안내</a>
+                    <a class="user-chip{% if request.resolver_match.url_name == 'my_page' %} active{% endif %}" href="{% url 'my_page' %}" aria-label="{{ user.username }} 마이페이지">{{ user.username }}</a>
+                {% else %}
+                    <a href="{% url 'login' %}">로그인</a>
+                    <a class="nav-signup" href="{% url 'signup' %}">회원가입</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="container" id="main-content">
+        {% for message in messages %}
+            <div class="message {{ message.tags }}" role="status">{{ message }}</div>
+        {% endfor %}
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>© {% now "Y" %} 과제신호등. All rights reserved.</span>
+            <a href="mailto:contact@example.com">문의 contact@example.com</a>
+        </div>
+    </footer>
+</body>
+</html>

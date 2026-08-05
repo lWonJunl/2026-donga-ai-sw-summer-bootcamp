@@ -2,12 +2,16 @@
 .env
 .env.*
 !.env.example
+**/private_key.pem
 
 # Python generated files
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Local editor settings
+.vscode/
 
 # Local databases, collected assets, logs, and editor backups
 *.sqlite3

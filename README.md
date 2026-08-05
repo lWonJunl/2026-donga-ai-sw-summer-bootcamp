@@ -16,7 +16,7 @@
 | **Program**      | 2026 DongA AI·SW Summer Bootcamp                              |
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
 | **Language**     | Python                                                        |
-| **Status**       | 🚧 In Progress (Day 15)                                       |
+| **Status**       | 🚧 In Progress (Day 16)                                       |
 <!-- ✅ Completed -->
 <br>
 
@@ -74,7 +74,7 @@
 | ~~05~~ | ~~04~~ | | ~~💻 Online~~ |
 | ~~05~~ | ~~05~~ | | ~~💻 Online~~ |
 | ~~06~~ | ~~01~~ | | ~~💻 Online~~ |
-| 06 | 02 | Cloud Computing & Deployment Basics | |
+| 06 | 02 | Cloud Computing, Deployment & Docker Basics | |
 | 06 | 03 | | |
 | 06 | 04 | | |
 | 06 | 05 | | 💻 Online |
@@ -98,11 +98,12 @@
 | **Python Libraries** | Feedparser, OpenCV, NumPy, NetworkX, Matplotlib |
 | **Web Framework** | Django 5.2 LTS, django-allauth |
 | **Web Server** | Python Standard Library (`http.server`) |
-| **Database** | MySQL, SQLite |
+| **Database** | MySQL, PostgreSQL, Neon, SQLite |
 | **API** | JSON, Django `JsonResponse`, Fetch API |
+| **Browser API** | Web Push API, Service Worker |
 | **Algorithms** | Dynamic Programming, Greedy, BFS, DFS, Dijkstra |
 | **External Services** | Google News RSS, Kakao Maps JavaScript API |
-| **Deployment** | Gunicorn, WhiteNoise, Render |
+| **Deployment** | Docker, Gunicorn, WhiteNoise, Render |
 | **Testing & Security** | Django TestCase, CSRF, CSP, HSTS, Rate Limiting |
 | **AI (LLM)** | Codex, Gemini |
 | **Development Tools** | Visual Studio Code, Git, GitHub |
@@ -145,6 +146,15 @@
 * 회원가입·로그인·API 접근·보안 헤더·캐시 정책을 Django 테스트로 검증했습니다.
 * 자세한 구현 내용과 실행 방법은 [`Portfolio_API.md`](Chapter04-Day04/Portfolio_API.md)에서 확인할 수 있습니다.
 * 보안 설정과 소셜 로그인 구성은 [`SECURITY.md`](Chapter04-Day04/SECURITY.md), [`SOCIAL_LOGIN_SETUP.md`](Chapter04-Day04/SOCIAL_LOGIN_SETUP.md)에 정리했습니다.
+
+### Assignment Signal Mini Project
+
+* 같은 과목을 듣는 학생들이 과제와 마감 시간을 공유하는 Django 웹 서비스 '과제신호등'을 구현했습니다.
+* 초대 코드 기반 과목 그룹, 관리자 권한, 공동 과제 등록과 사용자별 독립적인 진행 상태를 구성했습니다.
+* 마감까지 남은 시간과 진행 상태로 위험도를 계산하고, Service Worker와 Web Push API를 이용해 마감 알림을 발송하도록 구현했습니다.
+* PostgreSQL과 Neon을 연결하고 Render Web Service·Cron Job 배포 구성을 추가했습니다.
+* 인증, 요청 제한, 그룹·과제 권한, 개인 진행 상태, 알림 시각과 중복 방지를 Django 테스트로 검증했습니다.
+* 자세한 기능, 로컬 실행 및 배포 방법은 [Chapter06-Day02 README](Chapter06-Day02/README.md)에서 확인할 수 있습니다.
 
 ### Campus Navigation Mini Project
 

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.course_name }} · 과제신호등{% endblock %}
+
+{% block content %}
+<section class="group-header card">
+    <div>
+        <p class="eyebrow">{{ group.academic_year }} · {{ group.get_semester_display }}</p>
+        <h1>{{ group.course_name }}</h1>
+        {% if group.nickname %}<span class="group-nickname detail-nickname">{{ group.nickname }}</span>{% endif %}
+        <p class="muted">{{ group.section }}{% if group.professor %} · {{ group.professor }} 교수{% endif %}</p>
+    </div>
+    <div class="invite-box">
+        <span>초대 코드</span>
+        <strong>{{ group.invite_code }}</strong>
+    </div>
+</section>
+
+<div class="section-title">
+    <div>
+        <h2>과제 목록</h2>
+        <p class="muted">과제 정보는 함께 보고, 진행 상태는 각자 관리합니다.</p>
+    </div>
+    <div class="actions">
+        {% if is_owner %}<a class="button secondary" href="{% url 'group_manage' group.id %}">그룹 관리</a>{% endif %}
+        <a class="button primary" href="{% url 'create_assignment' group.id %}">과제 등록</a>
+    </div>
+</div>
+
+<div class="assignment-list">
+    {% for row in assignment_rows %}
+        <article class="assignment-card card risk-{{ row.risk.level }}">
+            <div class="risk-dot" aria-hidden="true"></div>
+            <div class="assignment-main">
+                <div class="assignment-meta">
+                    <span>등록: {{ row.assignment.created_by.username }}</span>
+                    <span class="badge {{ row.risk.level }}">{{ row.risk.label }}</span>
+                </div>
+                <h3>{{ row.assignment.title }}</h3>
+                {% if row.assignment.description %}<p class="assignment-description">{{ row.assignment.description|linebreaksbr }}</p>{% endif %}
+                <p class="deadline">{{ row.remaining }} · {{ row.assignment.due_at|date:"Y년 n월 j일 H:i" }}</p>
+                {% if is_owner or row.assignment.created_by == user %}
+                    <div class="item-admin-actions">
+                        <a href="{% url 'edit_assignment' row.assignment.id %}">수정</a>
+                        <form method="post" action="{% url 'delete_assignment' row.assignment.id %}" onsubmit="return confirm('이 과제를 삭제할까요?');">
+                            {% csrf_token %}<button type="submit">삭제</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            <form method="post" action="{% url 'update_progress' row.assignment.id %}">
+                {% csrf_token %}
+                <select name="status" onchange="this.form.submit()" aria-label="{{ row.assignment.title }} 진행 상태">
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if row.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+        </article>
+    {% empty %}
+        <div class="empty card"><strong>등록된 과제가 없습니다.</strong><p>첫 과제를 등록해 그룹 구성원과 공유해 보세요.</p></div>
+    {% endfor %}
+</div>
+
+<section class="member-section">
+    <div class="section-title"><h2>그룹 구성원</h2><span>{{ group.memberships.all|length }}명</span></div>
+    <div class="member-list">
+        {% for membership in group.memberships.all %}
+            <span>{{ membership.user.username }} · {{ membership.get_role_display }}</span>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="leave-group-row">
+    <div><strong>이 그룹에서 나가기</strong><p>나가면 이 그룹의 과제와 내 진행 상태를 더 이상 확인할 수 없습니다.</p></div>
+    <form method="post" action="{% url 'leave_group' group.id %}" onsubmit="return confirm('이 그룹에서 나갈까요?');">
+        {% csrf_token %}<button class="button danger-button" type="submit">그룹 나가기</button>
+    </form>
+</section>
+{% endblock %}

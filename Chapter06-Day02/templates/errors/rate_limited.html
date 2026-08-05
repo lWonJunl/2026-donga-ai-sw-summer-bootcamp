@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}잠시 후 다시 시도해 주세요 · 과제신호등{% endblock %}
+
+{% block content %}
+<section class="auth-result card rate-limit-page">
+    <span class="result-icon" aria-hidden="true">!</span>
+    <h1>요청이 너무 빠릅니다.</h1>
+    <p>반복적인 새로고침이 감지되어 잠시 접근을 제한했습니다.</p>
+    <small>{{ retry_after }}초 후 다시 시도해 주세요.</small>
+    <a class="button secondary" href="{% url 'landing' %}">첫 화면으로 이동</a>
+</section>
+{% endblock %}

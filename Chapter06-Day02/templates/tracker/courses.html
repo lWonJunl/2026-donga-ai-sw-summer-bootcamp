@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}내 과목 · 과제신호등{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">MY COURSES</p>
+        <h1>내 과목</h1>
+        <p class="muted">참여 중인 그룹과 공유 과제를 관리합니다.</p>
+    </div>
+    <div class="actions">
+        <a class="button secondary" href="{% url 'join_group' %}">초대 코드 입력</a>
+        <a class="button primary" href="{% url 'create_group' %}">과목 그룹 만들기</a>
+    </div>
+</section>
+
+<div class="section-title courses-title courses-toolbar">
+    <div>
+        <h2>참여 중인 그룹</h2>
+        <p>그룹을 선택하면 과제와 구성원을 확인할 수 있습니다.</p>
+    </div>
+    <div class="course-toolbar-actions">
+        <span class="course-count">{{ memberships|length }}개</span>
+        <div class="view-switch" role="group" aria-label="과목 보기 방식">
+            <button type="button" class="view-button active" data-view="card" aria-pressed="true">
+                <span class="card-view-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>카드형
+            </button>
+            <button type="button" class="view-button" data-view="list" aria-pressed="false">
+                <span class="list-view-icon" aria-hidden="true"><i></i><i></i><i></i></span>목록형
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="group-grid course-collection" data-course-collection data-view="card">
+    {% for membership in memberships %}
+        <a class="group-card card" href="{% url 'group_detail' membership.group.id %}">
+            <div class="group-card-top">
+                <span class="semester">{{ membership.group.academic_year }} · {{ membership.group.get_semester_display }}</span>
+                <span class="role">{{ membership.get_role_display }}</span>
+            </div>
+            <div class="course-name-block">
+                <h3>{{ membership.group.course_name }}</h3>
+                {% if membership.group.nickname %}<span class="group-nickname">{{ membership.group.nickname }}</span>{% endif %}
+            </div>
+            <p class="course-details"><span>{{ membership.group.section }}</span><span>{% if membership.group.professor %}{{ membership.group.professor }} 교수{% else %}담당 교수 미정{% endif %}</span></p>
+            <span class="card-link">과제 보기 <span aria-hidden="true">→</span></span>
+        </a>
+    {% empty %}
+        <div class="empty card empty-courses">
+            <strong>참여 중인 그룹이 없습니다.</strong>
+            <p>새 그룹을 만들거나 전달받은 초대 코드를 입력해 보세요.</p>
+            <div class="actions">
+                <a class="button secondary" href="{% url 'join_group' %}">초대 코드 입력</a>
+                <a class="button primary" href="{% url 'create_group' %}">그룹 만들기</a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+<script src="{% static 'tracker/courses.js' %}?v=1" defer></script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{% if editing %}그룹 정보 수정{% else %}새 과목 그룹{% endif %} · 과제신호등{% endblock %}
+
+{% block content %}
+<section class="form-card card">
+    <p class="eyebrow">{% if editing %}EDIT CLASS{% else %}CREATE CLASS{% endif %}</p>
+    <h1>{% if editing %}그룹 정보 수정{% else %}새 과목 그룹{% endif %}</h1>
+    <p class="muted">{% if editing %}초대 코드는 변경되지 않습니다.{% else %}같은 과목과 분반의 구성원을 초대할 수 있습니다.{% endif %}</p>
+    <p class="required-guide"><span>*</span> 표시는 필수 입력 항목입니다.</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+            <a class="button secondary" href="{% if editing %}{% url 'group_manage' group.id %}{% else %}{% url 'courses' %}{% endif %}">취소</a>
+            <button class="button primary" type="submit">{% if editing %}수정 완료{% else %}그룹 만들기{% endif %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

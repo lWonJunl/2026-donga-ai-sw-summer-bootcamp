@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}대시보드 · 과제신호등{% endblock %}
+
+{% block content %}
+<section class="dashboard-head">
+    <div>
+        <h1>과제 현황</h1>
+        <p class="muted">마감 시간과 진행 상태를 기준으로 우선순위를 정리했습니다.</p>
+    </div>
+    <div class="actions">
+        <button
+            class="button secondary"
+            id="enable-push"
+            type="button"
+            data-public-key="{{ vapid_public_key }}"
+            data-subscribe-url="{% url 'push_subscribe' %}"
+            data-test-url="{% url 'push_test' %}"
+            data-unsubscribe-url="{% url 'push_unsubscribe' %}"
+        >알림 켜기</button>
+        <a class="button primary" href="{% url 'courses' %}">내 과목 보기</a>
+    </div>
+</section>
+
+{% if summary.overdue or summary.danger %}
+<section class="attention-banner" aria-label="마감 위험 안내">
+    <div class="attention-icon" aria-hidden="true">!</div>
+    <div>
+        <strong>마감 초과 {{ summary.overdue }}개 · 24시간 이내 {{ summary.danger }}개</strong>
+        <p>아래 목록에서 우선순위를 확인하고 진행 상태를 업데이트하세요.</p>
+    </div>
+</section>
+{% endif %}
+
+<section class="summary-grid" aria-label="과제 요약">
+    <article class="summary-card overdue-summary">
+        <span>마감 초과</span>
+        <strong>{{ summary.overdue }}</strong>
+        <small>제출 기한 경과</small>
+    </article>
+    <article class="summary-card danger-summary">
+        <span>위험</span>
+        <strong>{{ summary.danger }}</strong>
+        <small>24시간 이내</small>
+    </article>
+    <article class="summary-card warning-summary">
+        <span>주의</span>
+        <strong>{{ summary.warning }}</strong>
+        <small>72시간 이내</small>
+    </article>
+    <article class="summary-card safe-summary">
+        <span>안전</span>
+        <strong>{{ summary.safe }}</strong>
+        <small>72시간 초과</small>
+    </article>
+</section>
+
+<section>
+    <div class="section-title">
+        <div>
+            <h2>우선순위 과제</h2>
+            <p>마감 초과, 위험, 주의, 안전 순서로 표시됩니다.</p>
+        </div>
+        <span>{{ assignment_rows|length }}개</span>
+    </div>
+    <div class="assignment-list">
+        {% for row in assignment_rows %}
+            <article class="assignment-card card risk-{{ row.risk.level }}">
+                <div class="risk-dot" aria-hidden="true"></div>
+                <div class="assignment-main">
+                    <div class="assignment-meta">
+                        <span>{{ row.assignment.group.course_name }}{% if row.assignment.group.nickname %} · {{ row.assignment.group.nickname }}{% endif %} · {{ row.assignment.group.section }}</span>
+                        <span class="badge {{ row.risk.level }}">{{ row.risk.label }}</span>
+                    </div>
+                    <h3>{{ row.assignment.title }}</h3>
+                    {% if row.assignment.description %}<p class="assignment-description">{{ row.assignment.description|linebreaksbr }}</p>{% endif %}
+                    <p class="deadline">{{ row.remaining }} <span>· {{ row.assignment.due_at|date:"n월 j일 H:i" }}</span></p>
+                </div>
+                <form method="post" action="{% url 'update_progress' row.assignment.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="dashboard">
+                    <select name="status" onchange="this.form.submit()" aria-label="{{ row.assignment.title }} 진행 상태">
+                        <option value="todo" {% if row.status == 'todo' %}selected{% endif %}>시작 전</option>
+                        <option value="doing" {% if row.status == 'doing' %}selected{% endif %}>진행 중</option>
+                        <option value="done" {% if row.status == 'done' %}selected{% endif %}>완료</option>
+                    </select>
+                </form>
+            </article>
+        {% empty %}
+            <div class="empty card empty-dashboard">
+                {% if completed_count %}
+                    <strong>진행할 과제가 없습니다.</strong>
+                    <p>등록된 과제 {{ completed_count }}개를 모두 완료했습니다.</p>
+                {% else %}
+                    <strong>등록된 과제가 없습니다.</strong>
+                    <p>내 과목에서 그룹에 참여하거나 첫 과제를 등록해 보세요.</p>
+                {% endif %}
+                <a class="button primary" href="{% url 'courses' %}">내 과목으로 이동</a>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+<script src="{% static 'tracker/push.js' %}?v=4" defer></script>
+{% endblock %}

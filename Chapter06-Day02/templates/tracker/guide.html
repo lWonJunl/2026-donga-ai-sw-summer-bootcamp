@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}이용 안내 · 과제신호등{% endblock %}
+
+{% block content %}
+<section class="guide-hero">
+    <p class="eyebrow">HOW IT WORKS</p>
+    <h1>과제신호등 사용법</h1>
+    <p>마감까지 남은 시간을 색으로 구분합니다. 과제 정보는 그룹과 공유하고 진행 상태는 개인별로 관리합니다.</p>
+</section>
+
+<section class="guide-section">
+    <div class="section-title">
+        <div>
+            <h2>위험도 기준</h2>
+            <p>완료한 과제는 대시보드에서 자동으로 제외됩니다.</p>
+        </div>
+    </div>
+    <div class="risk-guide-grid">
+        <article class="risk-guide-card overdue">
+            <span class="guide-number">01</span>
+            <strong>마감 초과</strong>
+            <p>제출 기한이 이미 지난 과제입니다.</p>
+        </article>
+        <article class="risk-guide-card danger">
+            <span class="guide-number">02</span>
+            <strong>위험</strong>
+            <p>마감까지 24시간 이내인 과제입니다.</p>
+        </article>
+        <article class="risk-guide-card warning">
+            <span class="guide-number">03</span>
+            <strong>주의</strong>
+            <p>마감까지 24시간 초과, 72시간 이내인 과제입니다.</p>
+        </article>
+        <article class="risk-guide-card safe">
+            <span class="guide-number">04</span>
+            <strong>안전</strong>
+            <p>마감까지 72시간보다 많이 남은 과제입니다.</p>
+        </article>
+    </div>
+</section>
+
+<section class="guide-section">
+    <div class="section-title">
+        <div>
+            <h2>이용 순서</h2>
+            <p>과목 그룹을 중심으로 과제를 함께 관리합니다.</p>
+        </div>
+    </div>
+    <ol class="guide-steps">
+        <li>
+            <span>1</span>
+            <div><strong>과목 시작하기</strong><p>새 과목 그룹을 만들거나 전달받은 초대 코드로 참여하세요.</p></div>
+        </li>
+        <li>
+            <span>2</span>
+            <div><strong>과제 공유하기</strong><p>그룹에서 과제명, 설명, 마감 시간을 등록하면 모든 구성원에게 공유됩니다.</p></div>
+        </li>
+        <li>
+            <span>3</span>
+            <div><strong>내 진행 상태 관리하기</strong><p>시작 전, 진행 중, 완료 중 하나로 변경하세요. 상태는 사용자별로 저장됩니다.</p></div>
+        </li>
+        <li>
+            <span>4</span>
+            <div><strong>브라우저 알림 연결하기</strong><p>마이페이지에서 알림을 켜고 테스트 알림으로 연결 상태를 확인하세요.</p></div>
+        </li>
+    </ol>
+</section>
+
+<section class="guide-cta card">
+    <div><strong>과제 관리를 시작해 볼까요?</strong><p>과목을 추가하면 대시보드가 마감 순서대로 정리해 드립니다.</p></div>
+    <a class="button primary" href="{% url 'courses' %}">내 과목으로 이동</a>
+</section>
+{% endblock %}
