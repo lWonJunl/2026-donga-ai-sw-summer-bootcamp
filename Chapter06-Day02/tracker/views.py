@@ -30,9 +30,24 @@ from .models import (
     ClassGroup,
     GroupMembership,
     EmailVerification,
+    PeerReminder,
     PushSubscription,
 )
 from .services import calculate_risk, remaining_text
+
+
+def korean_object_particle(value):
+    """과제명의 마지막 글자에 맞는 목적격 조사를 반환한다."""
+    text = str(value).rstrip()
+    if not text:
+        return "를"
+
+    last_character = text[-1]
+    if "가" <= last_character <= "힣":
+        has_final_consonant = (ord(last_character) - ord("가")) % 28 != 0
+        return "을" if has_final_consonant else "를"
+
+    return "을(를)"
 
 
 def landing(request):
@@ -334,7 +349,7 @@ def create_group(request):
             GroupMembership.objects.create(
                 group=group, user=request.user, role=GroupMembership.Role.OWNER
             )
-        messages.success(request, "과목 그룹을 만들었습니다.")
+        messages.success(request, "그룹을 만들었습니다.")
         return redirect("group_detail", group_id=group.id)
     return render(request, "tracker/group_form.html", {"form": form})
 
@@ -352,7 +367,7 @@ def join_group(request):
                 group=group, user=request.user
             )
             if created:
-                messages.success(request, f"{group.course_name} 그룹에 참여했습니다.")
+                messages.success(request, f"{group.name} 그룹에 참여했습니다.")
             else:
                 messages.info(request, "이미 참여 중인 그룹입니다.")
             return redirect("group_detail", group_id=group.id)
@@ -368,16 +383,168 @@ def group_detail(request, group_id):
     )
     assignments = list(group.assignments.select_related("created_by"))
     membership = GroupMembership.objects.get(group=group, user=request.user)
+    rows = assignment_rows(assignments, request.user)
+    incomplete_members = []
+    if group.show_member_progress:
+        memberships = list(group.memberships.all())
+        progress_by_pair = {
+            (progress.assignment_id, progress.user_id): progress.status
+            for progress in AssignmentProgress.objects.filter(
+                assignment__in=assignments,
+                user_id__in=[item.user_id for item in memberships],
+            )
+        }
+        recent_reminders = set(
+            PeerReminder.objects.filter(
+                assignment__in=assignments,
+                sender=request.user,
+                sent_at__gte=timezone.now() - timedelta(minutes=30),
+            ).values_list("assignment_id", "recipient_id")
+        )
+        for row in rows:
+            row["member_progress"] = []
+            for member in memberships:
+                status = progress_by_pair.get(
+                    (row["assignment"].id, member.user_id),
+                    AssignmentProgress.Status.TODO,
+                )
+                row["member_progress"].append(
+                    {
+                        "membership": member,
+                        "status": status,
+                        "status_label": AssignmentProgress.Status(status).label,
+                        "can_remind": (
+                            member.user_id != request.user.id
+                            and status != AssignmentProgress.Status.DONE
+                            and (row["assignment"].id, member.user_id)
+                            not in recent_reminders
+                        ),
+                        "recently_reminded": (
+                            row["assignment"].id,
+                            member.user_id,
+                        )
+                        in recent_reminders,
+                    }
+                )
+
+        for member in memberships:
+            incomplete_assignments = []
+            for row in rows:
+                status = progress_by_pair.get(
+                    (row["assignment"].id, member.user_id),
+                    AssignmentProgress.Status.TODO,
+                )
+                if status != AssignmentProgress.Status.DONE:
+                    incomplete_assignments.append(
+                        {
+                            "assignment": row["assignment"],
+                            "status": status,
+                            "status_label": AssignmentProgress.Status(status).label,
+                        }
+                    )
+            if incomplete_assignments:
+                incomplete_members.append(
+                    {
+                        "membership": member,
+                        "assignments": incomplete_assignments,
+                    }
+                )
     return render(
         request,
         "tracker/group_detail.html",
         {
             "group": group,
-            "assignment_rows": assignment_rows(assignments, request.user),
+            "assignment_rows": rows,
             "status_choices": AssignmentProgress.Status.choices,
             "is_owner": membership.role == GroupMembership.Role.OWNER,
+            "incomplete_members": incomplete_members,
         },
     )
+
+
+@login_required
+@require_POST
+def send_peer_reminder(request, assignment_id, recipient_id):
+    assignment = get_object_or_404(
+        Assignment.objects.select_related("group"),
+        id=assignment_id,
+        group__memberships__user=request.user,
+    )
+    group = assignment.group
+    if not group.show_member_progress:
+        raise PermissionDenied("구성원 진행 상태 공개를 켠 그룹에서만 사용할 수 있습니다.")
+
+    recipient_membership = get_object_or_404(
+        GroupMembership.objects.select_related("user"),
+        group=group,
+        user_id=recipient_id,
+    )
+    recipient = recipient_membership.user
+    if recipient.id == request.user.id:
+        messages.error(request, "자신은 찌를 수 없습니다.")
+        return redirect("group_detail", group_id=group.id)
+
+    status = (
+        AssignmentProgress.objects.filter(assignment=assignment, user=recipient)
+        .values_list("status", flat=True)
+        .first()
+        or AssignmentProgress.Status.TODO
+    )
+    if status == AssignmentProgress.Status.DONE:
+        messages.info(request, "이미 완료한 구성원은 찌를 수 없습니다.")
+        return redirect("group_detail", group_id=group.id)
+
+    cutoff = timezone.now() - timedelta(minutes=30)
+    if PeerReminder.objects.filter(
+        assignment=assignment,
+        sender=request.user,
+        recipient=recipient,
+        sent_at__gte=cutoff,
+    ).exists():
+        messages.info(request, "같은 구성원은 30분에 한 번만 찌를 수 있습니다.")
+        return redirect("group_detail", group_id=group.id)
+
+    if not settings.WEBPUSH_VAPID_PRIVATE_KEY or not settings.WEBPUSH_VAPID_PUBLIC_KEY:
+        messages.error(request, "서버에 푸시 알림 키가 설정되지 않았습니다.")
+        return redirect("group_detail", group_id=group.id)
+
+    payload = json.dumps(
+        {
+            "title": "과제신호등 찌르기 알림",
+            "body": (
+                f"누군가가 당신에게 ‘{assignment.title}’"
+                f"{korean_object_particle(assignment.title)} 하라고 찔렀습니다."
+            ),
+            "url": reverse("group_detail", args=[group.id]),
+        },
+        ensure_ascii=False,
+    )
+    delivered_count = 0
+    for subscription in recipient.push_subscriptions.all():
+        try:
+            webpush(
+                subscription_info=subscription.as_webpush_info(),
+                data=payload,
+                vapid_private_key=settings.WEBPUSH_VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": settings.WEBPUSH_VAPID_SUBJECT},
+            )
+            delivered_count += 1
+        except WebPushException as exc:
+            if exc.response is not None and exc.response.status_code in {404, 410}:
+                subscription.delete()
+
+    if delivered_count == 0:
+        messages.error(request, "상대방에게 등록된 브라우저 알림 기기가 없습니다.")
+        return redirect("group_detail", group_id=group.id)
+
+    PeerReminder.objects.create(
+        assignment=assignment,
+        sender=request.user,
+        recipient=recipient,
+        delivered_count=delivered_count,
+    )
+    messages.success(request, "찌르기 알림을 보냈습니다.")
+    return redirect("group_detail", group_id=group.id)
 
 
 @login_required
@@ -407,12 +574,12 @@ def leave_group(request, group_id):
                 "단독 관리자는 그룹을 나갈 수 없습니다. 다른 관리자를 지정하거나 그룹을 삭제해 주세요.",
             )
             return redirect("group_detail", group_id=group_id)
-    course_name = membership.group.course_name
+    group_name = membership.group.name
     AssignmentProgress.objects.filter(
         user=request.user, assignment__group=membership.group
     ).delete()
     membership.delete()
-    messages.success(request, f"{course_name} 그룹에서 나왔습니다.")
+    messages.success(request, f"{group_name} 그룹에서 나왔습니다.")
     return redirect("courses")
 
 
@@ -532,12 +699,12 @@ def manage_member(request, membership_id):
 def delete_group(request, group_id):
     group = get_object_or_404(ClassGroup, id=group_id)
     require_group_owner(group, request.user)
-    if request.POST.get("confirmation") != group.course_name:
-        messages.error(request, "과목명이 일치하지 않아 그룹을 삭제하지 않았습니다.")
+    if request.POST.get("confirmation") != group.name:
+        messages.error(request, "그룹 이름이 일치하지 않아 그룹을 삭제하지 않았습니다.")
         return redirect("group_manage", group_id=group.id)
-    course_name = group.course_name
+    group_name = group.name
     group.delete()
-    messages.success(request, f"{course_name} 그룹을 삭제했습니다.")
+    messages.success(request, f"{group_name} 그룹을 삭제했습니다.")
     return redirect("courses")
 
 

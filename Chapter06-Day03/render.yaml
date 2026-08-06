@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: priority-poke
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: bash build.sh
+    startCommand: python -m gunicorn priority_poke.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    healthCheckPath: /health/
+    envVars:
+      - key: DJANGO_PRODUCTION
+        value: "true"
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: RUN_NOTIFICATION_SCHEDULER
+        value: "true"
+      - key: NOTIFICATION_SCHEDULER_INTERVAL_SECONDS
+        value: "600"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false

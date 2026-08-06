@@ -16,7 +16,7 @@
 | **Program**      | 2026 DongA AI·SW Summer Bootcamp                              |
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
 | **Language**     | Python                                                        |
-| **Status**       | 🚧 In Progress (Day 16)                                       |
+| **Status**       | 🚧 In Progress (Day 17)                                       |
 <!-- ✅ Completed -->
 <br>
 
@@ -39,6 +39,7 @@
 ├── Chapter04-Day03
 ├── Chapter04-Day04
 ├── Chapter06-Day02
+├── Chapter06-Day03
 └── (In Progress...)
 ```
 
@@ -52,42 +53,19 @@
 | 01 | 02 | Greedy Algorithm | |
 | 01 | 03 | Graph Algorithm | |
 | 01 | 04 | Dijkstra Algorithm |  |
-| 01 | 05 | July Project(4 Weeks) Planning | Dong-A Univ. Campus Navigation |
+| 01 | 05 | July Project(4 Weeks) Planning | 📚 Dong-A Univ. Campus Navigation |
 | 02 | 01 | Database Fundamentals |  |
 | 02 | 02 | SQL Join & Union |  |
 | 02 | 03 | DBMS in Modern Services | |
-| 02 | 04 | Campus Navigation Project |  |
-| ~~02~~ | ~~05~~ | | ~~💻 Online~~ |
-| ~~03~~ | ~~01~~ | | ~~💻 Online~~ |
+| 02 | 04 | 📚 Campus Navigation Project |  |
 | 03 | 02 | Frontend & Backend Fundamentals | ❌ No hands-on coding |
-| 03 | 03 | Campus Navigation Project | |
+| 03 | 03 | 📚 Campus Navigation Project | |
 | 03 | 04 | Web Service | |
-| ~~03~~ | ~~05~~ | | ~~💻 Online~~ |
-| ~~04~~ | ~~01~~ | | ~~💻 Online~~ |
 | 04 | 02 | Django Fundamentals & Server Setup |  |
 | 04 | 03 | Portfolio Mini project | 💻 Online |
 | 04 | 04 | Django Portfolio API & Authentication | 🍽️ Networking |
-| ~~04~~ | ~~05~~ | | ~~💻 Online~~ |
-| ~~05~~ | ~~01~~ | | ~~💻 Online~~ |
-| ~~05~~ | ~~02~~ | | ~~💻 Online~~ |
-| ~~05~~ | ~~03~~ | | ~~💻 Online~~ |
-| ~~05~~ | ~~04~~ | | ~~💻 Online~~ |
-| ~~05~~ | ~~05~~ | | ~~💻 Online~~ |
-| ~~06~~ | ~~01~~ | | ~~💻 Online~~ |
-| 06 | 02 | Cloud Computing, Deployment & Docker Basics | |
-| 06 | 03 | | |
-| 06 | 04 | | |
-| 06 | 05 | | 💻 Online |
-| 07 | 01 | | 💻 Online |
-| 07 | 02 | | |
-| 07 | 03 | | |
-| 07 | 04 | | |
-| 07 | 05 | | 💻 Online |
-| 08 | 01 | | 💻 Online |
-| 08 | 02 | | |
-| 08 | 03 | | |
-| 08 | 04 | | |
-| 08 | 05 | | 💻 Online |
+| 06 | 02 | Cloud Computing, Deployment & Docker Basics | 📚 Assignment Signal Project |
+| 06 | 03 | Priority Poke Project Enhancement | 📚 Assignment Signal → Priority Poke |
 <br>
 
 ## 🛠️ Tech Stack
@@ -147,14 +125,14 @@
 * 자세한 구현 내용과 실행 방법은 [`Portfolio_API.md`](Chapter04-Day04/Portfolio_API.md)에서 확인할 수 있습니다.
 * 보안 설정과 소셜 로그인 구성은 [`SECURITY.md`](Chapter04-Day04/SECURITY.md), [`SOCIAL_LOGIN_SETUP.md`](Chapter04-Day04/SOCIAL_LOGIN_SETUP.md)에 정리했습니다.
 
-### Assignment Signal Mini Project
+### Priority Poke Mini Project
 
-* 같은 과목을 듣는 학생들이 과제와 마감 시간을 공유하는 Django 웹 서비스 '과제신호등'을 구현했습니다.
-* 초대 코드 기반 과목 그룹, 관리자 권한, 공동 과제 등록과 사용자별 독립적인 진행 상태를 구성했습니다.
-* 마감까지 남은 시간과 진행 상태로 위험도를 계산하고, Service Worker와 Web Push API를 이용해 마감 알림을 발송하도록 구현했습니다.
-* PostgreSQL과 Neon을 연결하고 Render Web Service·Cron Job 배포 구성을 추가했습니다.
-* 인증, 요청 제한, 그룹·과제 권한, 개인 진행 상태, 알림 시각과 중복 방지를 Django 테스트로 검증했습니다.
-* 자세한 기능, 로컬 실행 및 배포 방법은 [Chapter06-Day02 README](Chapter06-Day02/README.md)에서 확인할 수 있습니다.
+* Day 2에서 과제와 마감 시간을 공유하는 Django 웹 서비스 '과제신호등'을 구현하고, Day 3에서 '우선콕'으로 확장했습니다.
+* 초대 코드 기반 공유 그룹, 관리자 권한, 공동 과제 등록과 사용자별 독립적인 진행 상태를 구성했습니다.
+* 마감까지 남은 시간으로 위험도를 계산하고, Service Worker와 Web Push API로 자동 마감 알림과 구성원 '찌르기' 알림을 발송하도록 구현했습니다.
+* 로컬에서는 SQLite를 사용하고, 운영 환경에서는 PostgreSQL·Neon과 Render Web Service를 사용하도록 배포 구성을 분리했습니다.
+* 인증, 요청 제한, 그룹·과제 권한, 개인 진행 상태, 자동 알림과 찌르기 중복 방지를 Django 테스트로 검증했습니다.
+* 개발 과정은 [Day 2 · 과제신호등](Chapter06-Day02/README.md), 최신 구현과 배포 방법은 [Day 3 · 우선콕](Chapter06-Day03/README.md)에서 확인할 수 있습니다.
 
 ### Campus Navigation Mini Project
 

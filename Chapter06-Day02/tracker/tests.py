@@ -17,6 +17,7 @@ from .models import (
     EmailVerification,
     GroupMembership,
     LoginAttempt,
+    PeerReminder,
     PushSubscription,
 )
 from .services import calculate_risk
@@ -49,10 +50,8 @@ class AssignmentNotificationTests(TestCase):
             username="notify-user", password="test-pass-123"
         )
         self.group = ClassGroup.objects.create(
-            academic_year=2026,
-            semester=ClassGroup.Semester.SUMMER,
-            course_name="데이터베이스",
-            section="01",
+            name="데이터베이스 스터디",
+            description="데이터베이스 과제를 함께 관리합니다.",
             created_by=self.user,
         )
         GroupMembership.objects.create(
@@ -175,10 +174,8 @@ class CollaborationTests(TestCase):
             "outsider", email="outsider@example.com", password="test-pass-123"
         )
         self.group = ClassGroup.objects.create(
-            academic_year=2026,
-            semester=ClassGroup.Semester.SECOND,
-            course_name="자료구조",
-            section="01분반",
+            name="자료구조 스터디",
+            description="자료구조 과제와 일정을 함께 관리합니다.",
             created_by=self.owner,
         )
         GroupMembership.objects.create(
@@ -208,22 +205,15 @@ class CollaborationTests(TestCase):
         response = self.client.post(
             reverse("create_group"),
             {
-                "academic_year": "",
-                "semester": "",
-                "course_name": "",
-                "section": "",
-                "professor": "선택 교수",
-                "nickname": "선택 별칭",
+                "name": "",
+                "description": "설명만 입력",
             },
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ClassGroup.objects.count(), before_count)
         form = response.context["form"]
-        self.assertFormError(form, "academic_year", "필수 항목입니다.")
-        self.assertFormError(form, "semester", "필수 항목입니다.")
-        self.assertFormError(form, "course_name", "필수 항목입니다.")
-        self.assertFormError(form, "section", "필수 항목입니다.")
+        self.assertFormError(form, "name", "필수 항목입니다.")
 
     def test_landing_and_login_flow(self):
         landing_response = self.client.get(reverse("landing"))
@@ -515,14 +505,14 @@ class CollaborationTests(TestCase):
         self.assertEqual(response.context["active_assignment_count"], 0)
 
     def test_member_can_open_courses_page(self):
-        self.group.nickname = "전공 필수 스터디"
-        self.group.save(update_fields=["nickname"])
+        self.group.description = "전공 필수 과제를 함께 관리합니다."
+        self.group.save(update_fields=["description"])
         self.client.force_login(self.owner)
         response = self.client.get(reverse("courses"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.group.course_name)
-        self.assertContains(response, self.group.nickname)
+        self.assertContains(response, self.group.name)
+        self.assertContains(response, self.group.description)
         self.assertContains(response, "카드형")
         self.assertContains(response, "목록형")
         self.assertContains(response, "data-course-collection")
@@ -571,6 +561,122 @@ class CollaborationTests(TestCase):
         )
         self.assertEqual(owner_progress.status, AssignmentProgress.Status.DONE)
         self.assertEqual(friend_progress.status, AssignmentProgress.Status.DOING)
+
+    @override_settings(
+        WEBPUSH_VAPID_PRIVATE_KEY="test-private-key",
+        WEBPUSH_VAPID_PUBLIC_KEY="test-public-key",
+        WEBPUSH_VAPID_SUBJECT="mailto:test@example.com",
+    )
+    @patch("tracker.views.webpush")
+    def test_shared_progress_and_peer_reminder(self, mocked_webpush):
+        self.group.show_member_progress = True
+        self.group.save(update_fields=["show_member_progress"])
+        GroupMembership.objects.create(group=self.group, user=self.friend)
+        AssignmentProgress.objects.create(
+            assignment=self.assignment,
+            user=self.friend,
+            status=AssignmentProgress.Status.DOING,
+        )
+        PushSubscription.objects.create(
+            user=self.friend,
+            endpoint="https://push.example.test/friend",
+            p256dh="friend-p256dh",
+            auth="friend-auth",
+        )
+        self.client.force_login(self.owner)
+
+        page = self.client.get(reverse("group_detail", args=[self.group.id]))
+        self.assertContains(page, "미완료 구성원 보기")
+        self.assertContains(page, "1개 미완료")
+        self.assertContains(page, "구성원 현황")
+        self.assertContains(page, self.friend.username)
+        self.assertContains(page, "진행 중")
+        self.assertContains(page, "👉")
+        self.assertContains(page, "찌르기")
+        friend_summary = next(
+            item
+            for item in page.context["incomplete_members"]
+            if item["membership"].user_id == self.friend.id
+        )
+        self.assertEqual(len(friend_summary["assignments"]), 1)
+        self.assertEqual(
+            friend_summary["assignments"][0]["status"],
+            AssignmentProgress.Status.DOING,
+        )
+
+        response = self.client.post(
+            reverse("send_peer_reminder", args=[self.assignment.id, self.friend.id])
+        )
+        self.assertRedirects(response, reverse("group_detail", args=[self.group.id]))
+        self.assertEqual(mocked_webpush.call_count, 1)
+        payload = json.loads(mocked_webpush.call_args.kwargs["data"])
+        self.assertEqual(
+            payload["body"],
+            "누군가가 당신에게 ‘연결 리스트 구현’을 하라고 찔렀습니다.",
+        )
+        self.assertTrue(
+            PeerReminder.objects.filter(
+                assignment=self.assignment,
+                sender=self.owner,
+                recipient=self.friend,
+                delivered_count=1,
+            ).exists()
+        )
+
+    @override_settings(
+        WEBPUSH_VAPID_PRIVATE_KEY="test-private-key",
+        WEBPUSH_VAPID_PUBLIC_KEY="test-public-key",
+        WEBPUSH_VAPID_SUBJECT="mailto:test@example.com",
+    )
+    @patch("tracker.views.webpush")
+    def test_peer_reminder_is_limited_to_once_per_30_minutes(self, mocked_webpush):
+        self.group.show_member_progress = True
+        self.group.save(update_fields=["show_member_progress"])
+        GroupMembership.objects.create(group=self.group, user=self.friend)
+        PeerReminder.objects.create(
+            assignment=self.assignment,
+            sender=self.owner,
+            recipient=self.friend,
+            delivered_count=1,
+        )
+        self.client.force_login(self.owner)
+
+        response = self.client.post(
+            reverse("send_peer_reminder", args=[self.assignment.id, self.friend.id])
+        )
+
+        self.assertRedirects(response, reverse("group_detail", args=[self.group.id]))
+        self.assertEqual(PeerReminder.objects.count(), 1)
+        mocked_webpush.assert_not_called()
+
+    def test_peer_reminder_requires_shared_progress_option(self):
+        GroupMembership.objects.create(group=self.group, user=self.friend)
+        self.client.force_login(self.owner)
+
+        response = self.client.post(
+            reverse("send_peer_reminder", args=[self.assignment.id, self.friend.id])
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(PeerReminder.objects.exists())
+
+    def test_completed_member_cannot_be_reminded(self):
+        self.group.show_member_progress = True
+        self.group.save(update_fields=["show_member_progress"])
+        GroupMembership.objects.create(group=self.group, user=self.friend)
+        AssignmentProgress.objects.create(
+            assignment=self.assignment,
+            user=self.friend,
+            status=AssignmentProgress.Status.DONE,
+        )
+        self.client.force_login(self.owner)
+
+        response = self.client.post(
+            reverse("send_peer_reminder", args=[self.assignment.id, self.friend.id])
+        )
+
+        self.assertRedirects(response, reverse("group_detail", args=[self.group.id]))
+        self.assertFalse(PeerReminder.objects.exists())
 
     def test_member_can_add_shared_assignment(self):
         GroupMembership.objects.create(group=self.group, user=self.friend)
@@ -741,14 +847,14 @@ class CollaborationTests(TestCase):
         owner_membership.refresh_from_db()
         self.assertEqual(owner_membership.role, GroupMembership.Role.OWNER)
 
-    def test_owner_can_delete_group_with_course_name_confirmation(self):
+    def test_owner_can_delete_group_with_group_name_confirmation(self):
         group_id = self.group.id
         assignment_id = self.assignment.id
         self.client.force_login(self.owner)
 
         response = self.client.post(
             reverse("delete_group", args=[group_id]),
-            {"confirmation": self.group.course_name},
+            {"confirmation": self.group.name},
         )
 
         self.assertRedirects(response, reverse("courses"))
@@ -761,17 +867,17 @@ class CollaborationTests(TestCase):
 
         response = self.client.post(
             reverse("delete_group", args=[self.group.id]),
-            {"confirmation": self.group.course_name},
+            {"confirmation": self.group.name},
         )
 
         self.assertEqual(response.status_code, 403)
         self.assertTrue(ClassGroup.objects.filter(id=self.group.id).exists())
 
-    def test_group_delete_requires_exact_course_name(self):
+    def test_group_delete_requires_exact_group_name(self):
         self.client.force_login(self.owner)
         response = self.client.post(
             reverse("delete_group", args=[self.group.id]),
-            {"confirmation": "잘못된 과목명"},
+            {"confirmation": "잘못된 그룹 이름"},
         )
 
         self.assertRedirects(
@@ -840,12 +946,8 @@ class CollaborationTests(TestCase):
         GroupMembership.objects.create(group=self.group, user=self.friend)
         invite_code = self.group.invite_code
         payload = {
-            "academic_year": 2027,
-            "semester": ClassGroup.Semester.FIRST,
-            "course_name": "알고리즘",
-            "section": "02분반",
-            "professor": "김교수",
-            "nickname": "알고 스터디",
+            "name": "알고리즘 팀",
+            "description": "알고리즘 과제와 팀 일정을 함께 관리합니다.",
         }
 
         self.client.force_login(self.owner)
@@ -856,8 +958,11 @@ class CollaborationTests(TestCase):
             owner_response, reverse("group_manage", args=[self.group.id])
         )
         self.group.refresh_from_db()
-        self.assertEqual(self.group.course_name, "알고리즘")
-        self.assertEqual(self.group.nickname, "알고 스터디")
+        self.assertEqual(self.group.name, "알고리즘 팀")
+        self.assertEqual(
+            self.group.description,
+            "알고리즘 과제와 팀 일정을 함께 관리합니다.",
+        )
         self.assertEqual(self.group.invite_code, invite_code)
 
         self.client.force_login(self.friend)

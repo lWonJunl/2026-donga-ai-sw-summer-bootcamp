@@ -18,7 +18,7 @@
             data-test-url="{% url 'push_test' %}"
             data-unsubscribe-url="{% url 'push_unsubscribe' %}"
         >알림 켜기</button>
-        <a class="button primary" href="{% url 'courses' %}">내 과목 보기</a>
+        <a class="button primary" href="{% url 'courses' %}">내 그룹 보기</a>
     </div>
 </section>
 
@@ -69,7 +69,7 @@
                 <div class="risk-dot" aria-hidden="true"></div>
                 <div class="assignment-main">
                     <div class="assignment-meta">
-                        <span>{{ row.assignment.group.course_name }}{% if row.assignment.group.nickname %} · {{ row.assignment.group.nickname }}{% endif %} · {{ row.assignment.group.section }}</span>
+                        <span>{{ row.assignment.group.name }}</span>
                         <span class="badge {{ row.risk.level }}">{{ row.risk.label }}</span>
                     </div>
                     <h3>{{ row.assignment.title }}</h3>
@@ -93,9 +93,9 @@
                     <p>등록된 과제 {{ completed_count }}개를 모두 완료했습니다.</p>
                 {% else %}
                     <strong>등록된 과제가 없습니다.</strong>
-                    <p>내 과목에서 그룹에 참여하거나 첫 과제를 등록해 보세요.</p>
+                    <p>내 그룹에서 그룹에 참여하거나 첫 과제를 등록해 보세요.</p>
                 {% endif %}
-                <a class="button primary" href="{% url 'courses' %}">내 과목으로 이동</a>
+                <a class="button primary" href="{% url 'courses' %}">내 그룹으로 이동</a>
             </div>
         {% endfor %}
     </div>

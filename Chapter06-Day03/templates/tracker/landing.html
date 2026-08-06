@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}우선콕 · 급한 과제부터 콕{% endblock %}
+
+{% block content %}
+<section class="landing-hero">
+    <div class="landing-copy">
+        <p class="eyebrow">함께 쓰는 과제 우선순위</p>
+        <h1><span class="landing-title-main">급한 과제부터</span><span class="landing-title-accent">한눈에, 우선콕.</span></h1>
+        <p class="landing-description">과제는 그룹과 함께 공유하고, 내 진행 상태는 나답게 관리하세요. 우선콕이 남은 시간을 분석해 지금 해야 할 일을 먼저 보여드립니다.</p>
+        <div class="landing-actions">
+            <a class="button primary landing-primary" href="{% url 'signup' %}">무료로 시작하기</a>
+            <a class="button secondary" href="{% url 'login' %}">로그인</a>
+        </div>
+        <div class="landing-trust">
+            <span>초대 코드로 간편하게</span>
+            <span>개인별 진행 상태</span>
+            <span>마감·찌르기 알림</span>
+        </div>
+    </div>
+
+    <div class="landing-preview" aria-label="과제 위험도 미리보기">
+        <div class="preview-window">
+            <div class="preview-top"><i></i><i></i><i></i><span>오늘의 과제</span></div>
+            <div class="preview-summary">
+                <article class="preview-count danger"><span>위험</span><strong>2</strong><small>24시간 이내</small></article>
+                <article class="preview-count warning"><span>주의</span><strong>3</strong><small>24~72시간</small></article>
+                <article class="preview-count safe"><span>안전</span><strong>5</strong><small>72시간 초과</small></article>
+            </div>
+            <div class="preview-task risk-danger"><div><small>자료구조</small><strong>연결 리스트 구현</strong><span>18시간 남음</span></div><b>위험</b></div>
+            <div class="preview-task risk-warning"><div><small>운영체제</small><strong>프로세스 보고서</strong><span>2일 4시간 남음</span></div><b>주의</b></div>
+            <div class="preview-task risk-safe"><div><small>데이터베이스</small><strong>ERD 설계</strong><span>6일 남음</span></div><b>안전</b></div>
+        </div>
+    </div>
+</section>
+
+<section class="landing-features">
+    <div class="landing-section-head">
+        <p class="eyebrow">왜 우선콕인가요?</p>
+        <h2>일정 공유는 가볍게,<br>우선순위는 분명하게.</h2>
+        <p>흩어진 과제와 마감을 한곳에 모으고, 필요한 순간에만 알림을 받으세요.</p>
+    </div>
+    <div class="feature-grid">
+        <article><span class="feature-icon red">01</span><h3>놓치지 않는 우선순위</h3><p>남은 시간에 따라 마감 초과·위험·주의·안전으로 자동 분류합니다.</p></article>
+        <article><span class="feature-icon green">02</span><h3>한 번만 등록하는 과제</h3><p>한 사람이 등록하면 그룹 구성원 모두가 같은 과제 정보를 확인합니다.</p></article>
+        <article><span class="feature-icon yellow">03</span><h3>부담 없는 협업</h3><p>진행 상태를 확인하고 필요한 친구에게 가볍게 찌르기 알림을 보냅니다.</p></article>
+    </div>
+</section>
+
+<section class="landing-flow">
+    <div class="landing-section-head">
+        <p class="eyebrow">3단계로 시작하기</p>
+        <h2>만들고, 초대하고, 완료하세요.</h2>
+    </div>
+    <ol class="landing-flow-list">
+        <li><span>1</span><div><strong>그룹 만들기</strong><p>수업이나 팀 이름으로 새 그룹을 만드세요.</p></div></li>
+        <li><span>2</span><div><strong>친구 초대하기</strong><p>8자리 초대 코드만 전달하면 참여가 끝납니다.</p></div></li>
+        <li><span>3</span><div><strong>우선순위대로 완료하기</strong><p>대시보드에서 급한 과제부터 처리하세요.</p></div></li>
+    </ol>
+</section>
+
+<section class="landing-cta">
+    <div><p class="eyebrow">지금 바로 시작하세요</p><h2>다음 마감은 놓치지 않도록.</h2></div>
+    <a class="button primary" href="{% url 'signup' %}">우선콕 시작하기</a>
+</section>
+{% endblock %}

@@ -2,26 +2,35 @@
 .env
 .env.*
 !.env.example
-**/private_key.pem
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Python generated files
 __pycache__/
 *.py[cod]
 .venv/
 venv/
+env/
 
 # Local editor settings
 .vscode/
+.idea/
 
 # Local databases, collected assets, logs, and editor backups
 *.sqlite3
 *.sqlite3-*
+*.db
 *.log
 *.bak.*
 staticfiles/
 media/
 .coverage
 .pytest_cache/
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 .DS_Store
 Thumbs.db
 

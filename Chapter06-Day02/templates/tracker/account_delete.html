@@ -11,7 +11,7 @@
         <div class="withdrawal-warning">
             <strong>먼저 관리가 필요한 그룹</strong>
             <p>아래 그룹에 다른 관리자를 지정하거나 그룹을 삭제해야 탈퇴할 수 있습니다.</p>
-            <ul>{% for membership in sole_owner_groups %}<li><a href="{% url 'group_manage' membership.group.id %}">{{ membership.group.course_name }}</a></li>{% endfor %}</ul>
+            <ul>{% for membership in sole_owner_groups %}<li><a href="{% url 'group_manage' membership.group.id %}">{{ membership.group.name }}</a></li>{% endfor %}</ul>
         </div>
     {% endif %}
 

@@ -18,7 +18,7 @@
             <nav>
                 {% if user.is_authenticated %}
                     <a class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}" href="{% url 'dashboard' %}"{% if request.resolver_match.url_name == 'dashboard' %} aria-current="page"{% endif %}>대시보드</a>
-                    <a class="nav-link{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'group_detail' or request.resolver_match.url_name == 'group_manage' %} active{% endif %}" href="{% url 'courses' %}"{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'group_detail' or request.resolver_match.url_name == 'group_manage' %} aria-current="page"{% endif %}>내 과목</a>
+                    <a class="nav-link{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'group_detail' or request.resolver_match.url_name == 'group_manage' %} active{% endif %}" href="{% url 'courses' %}"{% if request.resolver_match.url_name == 'courses' or request.resolver_match.url_name == 'group_detail' or request.resolver_match.url_name == 'group_manage' %} aria-current="page"{% endif %}>내 그룹</a>
                     <a class="nav-link{% if request.resolver_match.url_name == 'guide' %} active{% endif %}" href="{% url 'guide' %}"{% if request.resolver_match.url_name == 'guide' %} aria-current="page"{% endif %}>이용 안내</a>
                     <a class="user-chip{% if request.resolver_match.url_name == 'my_page' %} active{% endif %}" href="{% url 'my_page' %}" aria-label="{{ user.username }} 마이페이지">{{ user.username }}</a>
                 {% else %}

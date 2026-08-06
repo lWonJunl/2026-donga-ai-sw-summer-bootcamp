@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}회원 탈퇴 · 우선콕{% endblock %}
+
+{% block content %}
+<section class="settings-form card account-delete-form">
+    <h1>회원 탈퇴</h1>
+    <p class="muted">탈퇴하면 개인 진행 상태, 그룹 참여 기록과 푸시 알림 구독이 삭제됩니다. 공유된 과제의 등록자 기록은 익명으로 보존됩니다.</p>
+
+    {% if sole_owner_groups %}
+        <div class="withdrawal-warning">
+            <strong>먼저 관리가 필요한 그룹</strong>
+            <p>아래 그룹에 다른 관리자를 지정하거나 그룹을 삭제해야 탈퇴할 수 있습니다.</p>
+            <ul>{% for membership in sole_owner_groups %}<li><a href="{% url 'group_manage' membership.group.id %}">{{ membership.group.name }}</a></li>{% endfor %}</ul>
+        </div>
+    {% endif %}
+
+    <form method="post" class="auth-form" onsubmit="return confirm('회원 탈퇴를 진행할까요?');">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="form-error-box">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+        {% for field in form %}
+            <div class="field-group{% if field.errors %} has-error{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            </div>
+        {% endfor %}
+        <div class="form-actions">
+            <a class="button secondary" href="{% url 'my_page' %}">취소</a>
+            <button class="button logout-button" type="submit">탈퇴하기</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

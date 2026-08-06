@@ -71,4 +71,9 @@ urlpatterns = [
         views.update_progress,
         name="update_progress",
     ),
+    path(
+        "assignments/<int:assignment_id>/remind/<int:recipient_id>/",
+        views.send_peer_reminder,
+        name="send_peer_reminder",
+    ),
 ]

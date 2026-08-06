@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}{{ group.course_name }} 관리 · 과제신호등{% endblock %}
+{% block title %}{{ group.name }} 관리 · 과제신호등{% endblock %}
 
 {% block content %}
 <section class="page-head manage-page-head">
     <div>
         <p class="eyebrow">GROUP SETTINGS</p>
         <h1>그룹 관리</h1>
-        <p class="muted">{{ group.course_name }}{% if group.nickname %} · {{ group.nickname }}{% endif %}</p>
+        <p class="muted">{{ group.name }}{% if group.description %} · {{ group.description|truncatechars:60 }}{% endif %}</p>
     </div>
     <div class="actions">
         <a class="button secondary" href="{% url 'edit_group' group.id %}">그룹 정보 수정</a>
@@ -50,9 +50,9 @@
     </div>
     <form method="post" action="{% url 'delete_group' group.id %}" class="delete-group-form" onsubmit="return confirm('그룹과 모든 과제를 영구 삭제할까요?');">
         {% csrf_token %}
-        <label class="sr-only" for="group-confirmation">확인을 위해 {{ group.course_name }} 입력</label>
+        <label class="sr-only" for="group-confirmation">확인을 위해 {{ group.name }} 입력</label>
         <div>
-            <input id="group-confirmation" name="confirmation" required autocomplete="off" placeholder="확인을 위해 {{ group.course_name }} 입력">
+            <input id="group-confirmation" name="confirmation" required autocomplete="off" placeholder="확인을 위해 {{ group.name }} 입력">
             <button class="button danger-solid" type="submit">그룹 삭제</button>
         </div>
     </form>

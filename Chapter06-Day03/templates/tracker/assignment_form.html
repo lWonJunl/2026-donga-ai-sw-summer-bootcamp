@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}{% if assignment %}과제 수정{% else %}과제 등록{% endif %} · 우선콕{% endblock %}
+
+{% block content %}
+<section class="form-card card">
+    <p class="eyebrow">{% if assignment %}EDIT ASSIGNMENT{% else %}NEW ASSIGNMENT{% endif %}</p>
+    <h1>{{ group.name }} 과제 {% if assignment %}수정{% else %}등록{% endif %}</h1>
+    <p class="muted">{% if assignment %}변경한 정보는 모든 그룹 구성원에게 반영됩니다.{% else %}등록한 과제는 그룹 구성원 모두에게 공유됩니다.{% endif %}</p>
+    <p class="required-guide"><span>*</span> 표시는 필수 입력 항목입니다.</p>
+    <form method="post" class="stack-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+            <a class="button secondary" href="{% url 'group_detail' group.id %}">취소</a>
+            <button class="button primary" type="submit">과제 {% if assignment %}수정{% else %}등록{% endif %}</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

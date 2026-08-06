@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.name }} · 우선콕{% endblock %}
+
+{% block content %}
+<section class="group-header card">
+    <div>
+        <p class="eyebrow">GROUP</p>
+        <h1>{{ group.name }}</h1>
+        {% if group.description %}<p class="muted group-description">{{ group.description|linebreaksbr }}</p>{% endif %}
+    </div>
+    <div class="invite-box">
+        <span>초대 코드</span>
+        <strong>{{ group.invite_code }}</strong>
+    </div>
+</section>
+
+<div class="section-title">
+    <div>
+        <h2>과제 목록</h2>
+        <p class="muted">
+            {% if group.show_member_progress %}과제 정보와 구성원 진행 상태를 함께 확인합니다.{% else %}과제 정보는 함께 보고, 진행 상태는 각자 관리합니다.{% endif %}
+        </p>
+    </div>
+    <div class="actions">
+        {% if is_owner %}<a class="button secondary" href="{% url 'group_manage' group.id %}">그룹 관리</a>{% endif %}
+        <a class="button primary" href="{% url 'create_assignment' group.id %}">과제 등록</a>
+    </div>
+</div>
+
+<div class="assignment-list">
+    {% for row in assignment_rows %}
+        <article class="assignment-card card risk-{{ row.risk.level }}">
+            <div class="risk-dot" aria-hidden="true"></div>
+            <div class="assignment-main">
+                <div class="assignment-meta">
+                    <span>등록: {{ row.assignment.created_by.username }}</span>
+                    <span class="badge {{ row.risk.level }}">{{ row.risk.label }}</span>
+                </div>
+                <h3>{{ row.assignment.title }}</h3>
+                {% if row.assignment.description %}<p class="assignment-description">{{ row.assignment.description|linebreaksbr }}</p>{% endif %}
+                <p class="deadline">{{ row.remaining }} · {{ row.assignment.due_at|date:"Y년 n월 j일 H:i" }}</p>
+                {% if is_owner or row.assignment.created_by == user %}
+                    <div class="item-admin-actions">
+                        <a href="{% url 'edit_assignment' row.assignment.id %}">수정</a>
+                        <form method="post" action="{% url 'delete_assignment' row.assignment.id %}" onsubmit="return confirm('이 과제를 삭제할까요?');">
+                            {% csrf_token %}<button type="submit">삭제</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+            <form method="post" action="{% url 'update_progress' row.assignment.id %}">
+                {% csrf_token %}
+                <select name="status" onchange="this.form.submit()" aria-label="{{ row.assignment.title }} 진행 상태">
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if row.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% if group.show_member_progress %}
+                <details class="member-progress-panel">
+                    <summary>구성원 현황</summary>
+                    <div class="member-progress-list">
+                        {% for item in row.member_progress %}
+                            <div class="member-progress-item">
+                                <div>
+                                    <span class="member-progress-name">{{ item.membership.user.username }}</span>
+                                    <span class="progress-status status-{{ item.status }}">{{ item.status_label }}</span>
+                                </div>
+                                {% if item.membership.user != user and item.status != 'done' %}
+                                    {% if item.can_remind %}
+                                        <form method="post" action="{% url 'send_peer_reminder' row.assignment.id item.membership.user.id %}" onsubmit="return confirm('이 구성원을 찌를까요?');">
+                                            {% csrf_token %}<button class="poke-button" type="submit" aria-label="{{ item.membership.user.username }}님 찌르기"><span aria-hidden="true">👉</span> 찌르기</button>
+                                        </form>
+                                    {% elif item.recently_reminded %}
+                                        <span class="reminded-label">찌르기 완료</span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </details>
+            {% endif %}
+        </article>
+    {% empty %}
+        <div class="empty card"><strong>등록된 과제가 없습니다.</strong><p>첫 과제를 등록해 그룹 구성원과 공유해 보세요.</p></div>
+    {% endfor %}
+</div>
+
+<section class="member-section">
+    <div class="section-title"><h2>그룹 구성원</h2><span>{{ group.memberships.all|length }}명</span></div>
+    <div class="member-list">
+        {% for membership in group.memberships.all %}
+            <span>{{ membership.user.username }} · {{ membership.get_role_display }}</span>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="leave-group-row">
+    <div><strong>이 그룹에서 나가기</strong><p>나가면 이 그룹의 과제와 내 진행 상태를 더 이상 확인할 수 없습니다.</p></div>
+    <form method="post" action="{% url 'leave_group' group.id %}" onsubmit="return confirm('이 그룹에서 나갈까요?');">
+        {% csrf_token %}<button class="button danger-button" type="submit">그룹 나가기</button>
+    </form>
+</section>
+{% endblock %}

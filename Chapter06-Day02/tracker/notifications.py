@@ -57,12 +57,12 @@ def current_notification_slot(due_at, now=None):
 def _notification_payload(assignment, slot):
     if slot.kind == AssignmentNotification.Kind.OVERDUE:
         body = (
-            f"{assignment.group.course_name} · {assignment.title} 과제가 "
+            f"{assignment.group.name} · {assignment.title} 과제가 "
             f"{slot.label} 상태입니다. 제출 여부를 확인하세요."
         )
     else:
         body = (
-            f"{assignment.group.course_name} · {assignment.title} 과제 마감까지 "
+            f"{assignment.group.name} · {assignment.title} 과제 마감까지 "
             f"{slot.label} 남았습니다."
         )
     return json.dumps(

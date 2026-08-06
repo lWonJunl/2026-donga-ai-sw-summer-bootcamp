@@ -1,0 +1,5 @@
+Django==5.2.16
+gunicorn==26.0.0
+psycopg2-binary==2.9.12
+pywebpush==2.1.2
+whitenoise[brotli]==6.12.0

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}내 그룹 · 우선콕{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <div>
+        <p class="eyebrow">함께 관리하는 공간</p>
+        <h1>내 그룹</h1>
+        <p class="muted">수업과 팀별로 과제를 나누고 구성원과 일정을 공유하세요.</p>
+    </div>
+    <div class="actions">
+        <a class="button secondary" href="{% url 'join_group' %}">초대 코드 입력</a>
+        <a class="button primary" href="{% url 'create_group' %}">그룹 만들기</a>
+    </div>
+</section>
+
+<div class="section-title courses-title courses-toolbar">
+    <div>
+        <h2>참여 중인 그룹</h2>
+        <p>그룹을 선택해 공유 과제와 나의 진행 상태를 확인하세요.</p>
+    </div>
+    <div class="course-toolbar-actions">
+        <span class="course-count">{{ memberships|length }}개</span>
+        <div class="view-switch" role="group" aria-label="과목 보기 방식">
+            <button type="button" class="view-button active" data-view="card" aria-pressed="true">
+                <span class="card-view-icon" aria-hidden="true"><i></i><i></i><i></i><i></i></span>카드형
+            </button>
+            <button type="button" class="view-button" data-view="list" aria-pressed="false">
+                <span class="list-view-icon" aria-hidden="true"><i></i><i></i><i></i></span>목록형
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="group-grid course-collection" data-course-collection data-view="card">
+    {% for membership in memberships %}
+        <a class="group-card card" href="{% url 'group_detail' membership.group.id %}">
+            <div class="group-card-top">
+                <span class="semester">공유 그룹</span>
+                <span class="role">{{ membership.get_role_display }}</span>
+            </div>
+            <div class="course-name-block">
+                <h3>{{ membership.group.name }}</h3>
+            </div>
+            <p class="course-details">{% if membership.group.description %}{{ membership.group.description|truncatechars:90 }}{% else %}그룹 설명이 없습니다.{% endif %}</p>
+            <span class="card-link">과제 보기 <span aria-hidden="true">→</span></span>
+        </a>
+    {% empty %}
+        <div class="empty card empty-courses">
+            <strong>참여 중인 그룹이 없습니다.</strong>
+            <p>새 그룹을 만들거나 전달받은 초대 코드를 입력해 보세요.</p>
+            <div class="actions">
+                <a class="button secondary" href="{% url 'join_group' %}">초대 코드 입력</a>
+                <a class="button primary" href="{% url 'create_group' %}">그룹 만들기</a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+<script src="{% static 'tracker/courses.js' %}?v=1" defer></script>
+{% endblock %}

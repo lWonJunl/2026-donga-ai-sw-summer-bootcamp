@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ group.name }} 관리 · 우선콕{% endblock %}
+
+{% block content %}
+<section class="page-head manage-page-head">
+    <div>
+        <p class="eyebrow">GROUP SETTINGS</p>
+        <h1>그룹 관리</h1>
+        <p class="muted">{{ group.name }}{% if group.description %} · {{ group.description|truncatechars:60 }}{% endif %}</p>
+    </div>
+    <div class="actions">
+        <a class="button secondary" href="{% url 'edit_group' group.id %}">그룹 정보 수정</a>
+        <a class="button secondary" href="{% url 'group_detail' group.id %}">그룹으로 돌아가기</a>
+    </div>
+</section>
+
+<section class="management-section">
+    <div class="section-title">
+        <div><h2>구성원 관리</h2><p>관리자 권한을 변경하거나 그룹에서 내보낼 수 있습니다.</p></div>
+        <span>{{ group.memberships.all|length }}명</span>
+    </div>
+    <div class="member-list owner-view">
+        {% for membership in group.memberships.all %}
+            <div class="member-row">
+                <div class="member-identity">
+                    <span class="member-avatar">{{ membership.user.username|first|upper }}</span>
+                    <div><strong>{{ membership.user.username }}</strong><small>{{ membership.get_role_display }}</small></div>
+                </div>
+                <form method="post" action="{% url 'manage_member' membership.id %}" class="member-controls">
+                    {% csrf_token %}
+                    {% if membership.role == 'member' %}
+                        <button name="action" value="make_owner" type="submit">관리자 지정</button>
+                    {% else %}
+                        <button name="action" value="make_member" type="submit">권한 해제</button>
+                    {% endif %}
+                    {% if membership.user != user %}
+                        <button class="remove" name="action" value="remove" type="submit" onclick="return confirm('이 구성원을 내보낼까요?');">내보내기</button>
+                    {% endif %}
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="danger-zone">
+    <div>
+        <strong>그룹 삭제</strong>
+        <p>등록된 과제와 구성원 기록이 모두 삭제되며 복구할 수 없습니다.</p>
+    </div>
+    <form method="post" action="{% url 'delete_group' group.id %}" class="delete-group-form" onsubmit="return confirm('그룹과 모든 과제를 영구 삭제할까요?');">
+        {% csrf_token %}
+        <label class="sr-only" for="group-confirmation">확인을 위해 {{ group.name }} 입력</label>
+        <div>
+            <input id="group-confirmation" name="confirmation" required autocomplete="off" placeholder="확인을 위해 {{ group.name }} 입력">
+            <button class="button danger-solid" type="submit">그룹 삭제</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

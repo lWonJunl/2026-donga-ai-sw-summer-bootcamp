@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입 · 우선콕{% endblock %}
+
+{% block content %}
+<div class="auth-layout signup-layout">
+    <section class="auth-intro">
+        <p class="eyebrow">START TOGETHER</p>
+        <h1>과제 관리를<br><span>더 단순하게.</span></h1>
+        <p>계정을 만들고 그룹에 참여하면 친구들과 과제는 공유하고 진행 상태는 개인별로 관리할 수 있습니다.</p>
+        <ul class="auth-benefits">
+            <li><b>1</b><span><strong>초대 코드로 참여</strong>함께 관리할 친구들과 빠르게 연결</span></li>
+            <li><b>2</b><span><strong>위험도 자동 분류</strong>마감까지 남은 시간으로 우선순위 확인</span></li>
+            <li><b>3</b><span><strong>개인 진행 상태</strong>시작 전부터 완료까지 나만의 상태 저장</span></li>
+        </ul>
+    </section>
+
+    <section class="auth-panel card signup-panel">
+        <div class="auth-panel-head">
+            <span class="auth-panel-icon" aria-hidden="true">+</span>
+            <h2>회원가입</h2>
+            <p>우선콕에서 사용할 계정을 만드세요.</p>
+        </div>
+
+        <form method="post" class="auth-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="form-error-box">입력한 내용을 다시 확인해 주세요.</div>
+            {% endif %}
+            {% for field in form %}
+                <div class="field-group{% if field.errors %} has-error{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="field-help">{{ field.help_text|safe }}</div>{% endif %}
+                    {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                </div>
+            {% endfor %}
+            <button class="button primary auth-submit" type="submit">계정 만들기</button>
+        </form>
+
+        <div class="auth-switch">
+            <span>이미 계정이 있나요?</span>
+            <a href="{% url 'login' %}">로그인</a>
+        </div>
+    </section>
+</div>
+{% endblock %}
