@@ -27,7 +27,8 @@ def env_bool(name, default=False):
     return os.environ.get(name, str(default)).lower() in {"1", "true", "yes", "on"}
 
 
-PRODUCTION = env_bool("DJANGO_PRODUCTION")
+IS_VERCEL = os.environ.get("VERCEL") == "1"
+PRODUCTION = env_bool("DJANGO_PRODUCTION", default=IS_VERCEL)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 if not SECRET_KEY:
     if PRODUCTION:
@@ -50,6 +51,15 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
     if origin.strip()
 ]
+
+for vercel_host_variable in ("VERCEL_URL", "VERCEL_PROJECT_PRODUCTION_URL"):
+    vercel_host = os.environ.get(vercel_host_variable, "").strip()
+    if vercel_host and vercel_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(vercel_host)
+
+    vercel_origin = f"https://{vercel_host}" if vercel_host else ""
+    if vercel_origin and vercel_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(vercel_origin)
 
 
 # Application definition
@@ -172,7 +182,7 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-if env_bool("DJANGO_BEHIND_HTTPS_PROXY"):
+if IS_VERCEL or env_bool("DJANGO_BEHIND_HTTPS_PROXY"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 AUTHENTICATION_BACKENDS = [

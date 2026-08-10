@@ -1,6 +1,6 @@
-# Security and production deployment
+# Security and Vercel deployment
 
-Do not deploy with `manage.py runserver`. Use a maintained Python runtime, a production WSGI/ASGI server, and HTTPS at the reverse proxy.
+Do not deploy with `manage.py runserver`. Vercel detects `manage.py`, runs the Django WSGI application with its Python Runtime, and terminates HTTPS at its proxy.
 
 Required production environment:
 
@@ -8,10 +8,9 @@ Required production environment:
 DJANGO_PRODUCTION=True
 DJANGO_DEBUG=False
 DJANGO_SECRET_KEY=<at least 50 random characters>
-DJANGO_ALLOWED_HOSTS=portfolio.example.com
-DJANGO_CSRF_TRUSTED_ORIGINS=https://portfolio.example.com
-DJANGO_BEHIND_HTTPS_PROXY=True
 ```
+
+Vercel's `VERCEL_URL` and `VERCEL_PROJECT_PRODUCTION_URL` are added to `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` automatically. Set explicit Django host variables only for an additional custom domain.
 
 `DJANGO_HSTS_INCLUDE_SUBDOMAINS` and `DJANGO_HSTS_PRELOAD` intentionally default to false. Enable them only when every subdomain is permanently HTTPS-ready. HSTS is otherwise enabled for one year in production.
 
@@ -21,8 +20,8 @@ Signup requires email verification and enables django-allauth's account-enumerat
 
 Email verification and password reset require a working SMTP service in production. Configure every `DJANGO_EMAIL_*` value in `.env.example`; production startup fails when `DJANGO_EMAIL_HOST` is missing.
 
-The local SQLite database can contain usernames, password hashes, sessions, and OAuth account metadata. It is ignored by Git and should remain readable only by the service account. Use encrypted backups and a production database for deployment.
+The local SQLite database can contain usernames, password hashes, sessions, and OAuth account metadata. It is ignored by Git, and it is not suitable as persistent storage on Vercel Functions. Use an external managed PostgreSQL database before treating the authentication features as production-ready.
 
-The Django admin login is not covered by django-allauth's rate limits. In production, restrict `/admin/` at the reverse proxy or private network and monitor failed login attempts.
+The Django admin login is not covered by django-allauth's rate limits. In production, protect or disable `/admin/` with Vercel Deployment Protection or application-level access control and monitor failed login attempts.
 
 The in-process login limiter is suitable for a single application process. A multi-process deployment must configure Django `CACHES` with a shared Redis or Memcached backend so limits are shared across workers.

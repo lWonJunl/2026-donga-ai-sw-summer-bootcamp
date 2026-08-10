@@ -24,7 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
+IS_VERCEL = os.environ.get('VERCEL') == '1'
+DEBUG = os.environ.get(
+    'DJANGO_DEBUG',
+    'False' if IS_VERCEL else 'True',
+).lower() in ('1', 'true', 'yes')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
@@ -36,7 +40,8 @@ if not SECRET_KEY:
 ALLOWED_HOSTS = [
     host.strip()
     for host in os.environ.get(
-        'DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost'
+        'DJANGO_ALLOWED_HOSTS',
+        '127.0.0.1,localhost,.vercel.app' if IS_VERCEL else '127.0.0.1,localhost',
     ).split(',')
     if host.strip()
 ]
@@ -47,15 +52,14 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
-# Render supplies the exact public hostname and URL at runtime. Adding those
-# values avoids a broad `.onrender.com` host wildcard.
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+for vercel_host_variable in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL'):
+    vercel_host = os.environ.get(vercel_host_variable, '').strip()
+    if vercel_host and vercel_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(vercel_host)
 
-RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL', '').strip()
-if RENDER_EXTERNAL_URL and RENDER_EXTERNAL_URL not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(RENDER_EXTERNAL_URL)
+    vercel_origin = f'https://{vercel_host}' if vercel_host else ''
+    if vercel_origin and vercel_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(vercel_origin)
 
 
 # Application definition
@@ -159,7 +163,7 @@ STORAGES = {
     },
 }
 
-# Render terminates HTTPS at its reverse proxy.
+# Vercel terminates HTTPS at its reverse proxy.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True

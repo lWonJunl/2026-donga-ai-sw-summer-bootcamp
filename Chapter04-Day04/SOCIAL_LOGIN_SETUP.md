@@ -9,4 +9,6 @@
 - Kakao: `http://localhost:8000/accounts/kakao/login/callback/`
 - Naver: `http://localhost:8000/accounts/naver/login/callback/`
 
-운영 배포 시에는 위 호스트를 실제 HTTPS 도메인으로 교체합니다. 환경변수 설정 후 Django 서버를 재시작하면 로그인 화면의 해당 버튼이 활성화됩니다.
+Vercel 배포에서는 위 호스트를 실제 프로덕션 주소로 교체합니다. 예를 들어 프로젝트 주소가 `https://my-project.vercel.app`이라면 GitHub 콜백은 `https://my-project.vercel.app/accounts/github/login/callback/`입니다.
+
+OAuth Client ID와 Secret은 Vercel Project Settings의 Environment Variables에 Production과 Preview 환경별로 등록합니다. 값을 변경한 뒤에는 다시 배포해야 로그인 화면의 해당 버튼에 새 설정이 적용됩니다.

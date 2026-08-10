@@ -22,7 +22,7 @@
 | **Authentication** | Django Session Authentication, django-allauth |
 | **Database** | SQLite for user accounts and sessions |
 | **Frontend** | HTML, CSS, Vanilla JavaScript Fetch API |
-| **Environment** | Rocky Linux |
+| **Environment** | Local development, Vercel Python Runtime |
 
 <br>
 
@@ -215,11 +215,13 @@ python manage.py test portfolio
 | **Database** | SQLite |
 | **Frontend** | HTML5, CSS3, Vanilla JavaScript |
 | **Client Request** | Fetch API |
-| **Server Environment** | Rocky Linux |
+| **Deployment** | Vercel Python Runtime |
 
 <br>
 
-## ▶️ Run on Rocky Linux
+## ▶️ Local Development and Vercel Deployment
+
+### Local development
 
 ```bash
 cd /path/to/Chapter04-Day04
@@ -235,30 +237,36 @@ python manage.py runserver 0.0.0.0:8000
 
 개발 환경에서는 콘솔에 출력되는 이메일 인증 링크를 열어 계정을 인증한 뒤 `http://서버주소:8000/api/`에서 API를 호출합니다.
 
-> `runserver`는 개발 실습용입니다. 실제 공개 배포 전에는 운영 환경변수, Gunicorn, Nginx, HTTPS와 SMTP 설정이 필요합니다.
+> `runserver`는 개발 실습용입니다. Vercel에서는 Python Runtime이 Django WSGI 애플리케이션을 실행하고 HTTPS를 처리하므로 Gunicorn과 Nginx 설정은 필요하지 않습니다.
 
-### Production Environment Variables
+### Vercel deployment
 
-```bash
-export DJANGO_PRODUCTION=true
-export DJANGO_SECRET_KEY='충분히 길고 무작위인 운영용 키'
-export DJANGO_ALLOWED_HOSTS='portfolio.example.com'
-export DJANGO_CSRF_TRUSTED_ORIGINS='https://portfolio.example.com'
-export DJANGO_BEHIND_HTTPS_PROXY=true
-export DJANGO_EMAIL_HOST='smtp.example.com'
-export DJANGO_EMAIL_PORT=587
-export DJANGO_EMAIL_HOST_USER='smtp-user'
-export DJANGO_EMAIL_HOST_PASSWORD='smtp-password'
-export DJANGO_DEFAULT_FROM_EMAIL='no-reply@example.com'
-```
+1. Vercel에서 GitHub 저장소를 가져오고 Root Directory를 `Chapter04-Day04`로 지정합니다.
+2. Framework Preset, Build Command와 Output Directory는 자동 감지 또는 기본값으로 둡니다.
+3. Project Settings의 Environment Variables에 아래 값을 Production과 Preview 환경별로 등록합니다.
+
+| Name | Value |
+| :-- | :-- |
+| `DJANGO_PRODUCTION` | `True` |
+| `DJANGO_DEBUG` | `False` |
+| `DJANGO_SECRET_KEY` | 충분히 길고 무작위인 운영용 키 |
+| `DJANGO_EMAIL_HOST` | SMTP 호스트 |
+| `DJANGO_EMAIL_PORT` | `587` |
+| `DJANGO_EMAIL_HOST_USER` | SMTP 사용자 |
+| `DJANGO_EMAIL_HOST_PASSWORD` | SMTP 비밀번호 |
+| `DJANGO_DEFAULT_FROM_EMAIL` | 발신 이메일 주소 |
+
+Vercel이 제공하는 `VERCEL_URL`과 `VERCEL_PROJECT_PRODUCTION_URL`은 허용 호스트와 CSRF 신뢰 출처에 자동 반영됩니다. `.python-version`은 Python 3.12를 사용하도록 지정합니다.
 
 소셜 로그인을 사용할 때는 각 서비스의 OAuth Client ID와 Secret도 환경변수로 설정합니다. 실제 비밀값은 문서나 저장소에 기록하지 않습니다.
+
+> 현재 SQLite 설정은 Vercel Functions의 영속 저장소로 사용할 수 없습니다. 로그인, 세션과 OAuth 계정 데이터를 실제 운영에서 유지하려면 외부 관리형 PostgreSQL을 연결하고 `DATABASES` 설정을 변경해야 합니다. SQLite 상태에 의존하는 배포는 데모 용도로만 사용합니다.
 
 <br>
 
 ## 🔒 Security & Publication
 
-* `db.sqlite3`에는 가입한 사용자 정보가 저장되므로 GitHub에 올리지 않습니다.
+* `db.sqlite3`에는 가입한 사용자 정보가 저장되므로 GitHub에 올리지 않으며 Vercel의 운영 DB로 사용하지 않습니다.
 * Django 코드, 텍스트 데이터, HTML/CSS/JavaScript와 보안 문서는 실제 비밀값 없이 GitHub에 공개합니다.
 * `.env`, 백업파일, Python 캐시, 로그와 사용자 DB는 `.gitignore`로 제외하고 `.env.example`에는 변수 이름만 제공합니다.
 * 운영용 `SECRET_KEY`는 환경변수로 분리하고 공개된 키는 사용하지 않습니다.

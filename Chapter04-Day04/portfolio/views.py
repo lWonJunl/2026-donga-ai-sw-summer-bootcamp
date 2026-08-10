@@ -156,8 +156,8 @@ PROJECT_ARCHIVE = [
         "year": "2026",
         "category": "Web",
         "title": "Django 개인 포트폴리오",
-        "description": "Django 템플릿과 반응형 CSS, Vanilla JavaScript로 제작한 현재의 포트폴리오 웹사이트입니다.",
-        "tags": ["Django", "HTML", "CSS", "JavaScript"],
+        "description": "Django 템플릿과 반응형 CSS, Vanilla JavaScript로 제작해 Vercel에 배포한 현재의 포트폴리오 웹사이트입니다.",
+        "tags": ["Django", "HTML", "CSS", "JavaScript", "Vercel"],
         "link": "",
     },
     {
@@ -621,7 +621,7 @@ JOURNEY = [
         "period": "2026.06.29 — 08.21",
         "title": "2026 동아 AI·SW 여름 부트캠프",
         "organization": "동아대학교 소프트웨어중심대학",
-        "description": "알고리즘, MySQL, 프런트엔드와 Django를 학습하며 캠퍼스 길찾기 서비스와 개인 포트폴리오를 구현하고 있습니다.",
+        "description": "알고리즘, MySQL, 프런트엔드와 Django를 학습하며 캠퍼스 길찾기 서비스를 구현하고 개인 포트폴리오를 Vercel에 배포했습니다.",
     },
 ]
 
@@ -671,7 +671,7 @@ ARCHIVE_TRANSLATIONS = {
     },
     "Django 개인 포트폴리오": {
         "title": "Django Personal Portfolio",
-        "description": "I built this responsive portfolio with Django templates, CSS, and vanilla JavaScript and deployed it in a Linux-based Django environment.",
+        "description": "I built this responsive portfolio with Django templates, CSS, and vanilla JavaScript and deployed it on Vercel.",
     },
     "Google News RSS 추천기": {
         "title": "Google News RSS Recommender",
@@ -788,7 +788,7 @@ JOURNEY_TRANSLATIONS = {
     "2026 동아 AI·SW 여름 부트캠프": {
         "title": "2026 Dong-A AI·SW Summer Bootcamp",
         "organization": "Dong-A University National Center of Excellence in Software",
-        "description": "I am learning algorithms, MySQL, frontend fundamentals, and Django while building a campus navigation service and this portfolio.",
+        "description": "I am learning algorithms, MySQL, frontend fundamentals, and Django while building a campus navigation service and deploying this portfolio on Vercel.",
     },
 }
 
