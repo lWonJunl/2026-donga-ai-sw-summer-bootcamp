@@ -16,7 +16,7 @@
 | **Program**      | 2026 DongA AI·SW Summer Bootcamp                              |
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
 | **Language**     | Python                                                        |
-| **Status**       | 🚧 In Progress (Day 17)                                       |
+| **Status**       | 🚧 In Progress (Day 18)                                       |
 <!-- ✅ Completed -->
 <br>
 
@@ -57,15 +57,16 @@
 | 02 | 01 | Database Fundamentals |  |
 | 02 | 02 | SQL Join & Union |  |
 | 02 | 03 | DBMS in Modern Services | |
-| 02 | 04 | 📚 Campus Navigation Project |  |
+| 02 | 04 | 📚  Dong-A Univ. Campus Navigation Project |  |
 | 03 | 02 | Frontend & Backend Fundamentals | ❌ No hands-on coding |
-| 03 | 03 | 📚 Campus Navigation Project | |
+| 03 | 03 | 📚  Dong-A Univ. Campus Navigation Project | |
 | 03 | 04 | Web Service | |
 | 04 | 02 | Django Fundamentals & Server Setup |  |
-| 04 | 03 | Portfolio Mini project | 💻 Online |
+| 04 | 03 | 📚 Portfolio project | 💻 Online |
 | 04 | 04 | Django Portfolio API & Authentication | 🍽️ Networking |
 | 06 | 02 | Cloud Computing, Deployment & Docker Basics | 📚 Assignment Signal Project |
 | 06 | 03 | Priority Poke Project Enhancement | 📚 Assignment Signal → Priority Poke |
+| 07 | 01 | Generative AI & LLM Fundamentals | |
 <br>
 
 ## 🛠️ Tech Stack
