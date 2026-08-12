@@ -16,7 +16,7 @@
 | **Program**      | 2026 DongA AI·SW Summer Bootcamp                              |
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
 | **Language**     | Python                                                        |
-| **Status**       | 🚧 In Progress (Day 18)                                       |
+| **Status**       | 🚧 In Progress (Day 19)                                       |
 <!-- ✅ Completed -->
 <br>
 
@@ -40,6 +40,7 @@
 ├── Chapter04-Day04
 ├── Chapter06-Day02
 ├── Chapter06-Day03
+├── Chapter07-Day03
 └── (In Progress...)
 ```
 
@@ -66,7 +67,8 @@
 | 04 | 04 | Django Portfolio API & Authentication | 🍽️ Networking |
 | 06 | 02 | Cloud Computing, Deployment & Docker Basics | 📚 Assignment Signal Project |
 | 06 | 03 | Priority Poke Project Enhancement | 📚 Assignment Signal → Priority Poke |
-| 07 | 01 | Generative AI & LLM Fundamentals | |
+| 07 | 02 | Generative AI & LLM Fundamentals | |
+| 07 | 03 | Local AI Infrastructure on Windows | |
 <br>
 
 ## 🛠️ Tech Stack
