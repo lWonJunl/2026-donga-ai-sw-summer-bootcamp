@@ -1,9 +1,17 @@
+import os
+import secrets
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-change-this-key-in-production"
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").lower() in {"1", "true", "yes"}
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY is required when DEBUG is false")
+    SECRET_KEY = secrets.token_urlsafe(64)
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 INSTALLED_APPS = [
@@ -48,6 +56,28 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
+}
+
+# SQLite remains the source of truth. Redis only caches the recent chat context.
+REDIS_URL = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+CHAT_CONTEXT_MESSAGE_LIMIT = int(os.environ.get("CHAT_CONTEXT_MESSAGE_LIMIT", "12"))
+CHAT_CONTEXT_CACHE_TIMEOUT = int(os.environ.get("CHAT_CONTEXT_CACHE_TIMEOUT", "3600"))
+CHAT_MESSAGE_MAX_LENGTH = int(os.environ.get("CHAT_MESSAGE_MAX_LENGTH", "16000"))
+SYSTEM_PROMPT_MAX_LENGTH = int(os.environ.get("SYSTEM_PROMPT_MAX_LENGTH", "1000"))
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "exaone-default",
+    },
+    "context": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "KEY_PREFIX": "exaone-chat",
+        "TIMEOUT": CHAT_CONTEXT_CACHE_TIMEOUT,
+        "OPTIONS": {
+            "serializer": "chat.context_cache.UTF8StringSerializer",
+        },
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [

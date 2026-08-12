@@ -7,6 +7,7 @@ Streamlit 없이 Django와 SQLite로 만든 회원별 로컬 AI 채팅 사이트
 - Django 회원가입, 로그인, 로그아웃
 - 계정별 대화 목록과 메시지 완전 분리
 - SQLite를 이용한 대화 및 개인 설정 저장
+- Redis를 이용한 최근 대화 맥락 캐시
 - Ollama 답변 실시간 스트리밍
 - 답변 생성 중단 및 마지막 답변 다시 생성
 - 최근 대화 맥락 유지와 짧은 후속 질문 해석
@@ -24,6 +25,8 @@ Streamlit 없이 Django와 SQLite로 만든 회원별 로컬 AI 채팅 사이트
 - Python 3.10
 - Django 5.2
 - SQLite
+- Redis
+- Docker Desktop
 - HTML, CSS, JavaScript
 - Ollama REST API
 - EXAONE 3.5 7.8B
@@ -34,7 +37,8 @@ Streamlit 없이 Django와 SQLite로 만든 회원별 로컬 AI 채팅 사이트
 
 1. Python 3.10 이상
 2. Ollama
-3. Git(선택 사항)
+3. Docker Desktop
+4. Git(선택 사항)
 
 Ollama를 설치한 후 모델을 준비합니다.
 
@@ -78,6 +82,25 @@ python manage.py migrate
 
 ## 실행
 
+Docker Desktop에서 `redis:latest` 이미지를 로컬 호스트에만 공개하도록 실행합니다.
+
+- 컨테이너 이름: `Redis`
+- 호스트 주소 및 포트: `127.0.0.1:6379`
+- 컨테이너 포트: `6379`
+
+PowerShell에서는 다음 명령으로 같은 구성을 실행할 수 있습니다.
+
+```powershell
+docker run --name Redis -p 127.0.0.1:6379:6379 -d redis:latest
+docker exec Redis redis-cli ping
+```
+
+정상이라면 두 번째 명령에서 `PONG`이 출력됩니다.
+
+`-p 6379:6379`처럼 호스트 주소를 생략하면 Redis가 외부 네트워크에도
+노출될 수 있으므로 사용하지 않습니다. 이 프로젝트는 로컬 학습용이며 운영 배포용
+설정은 별도로 구성해야 합니다.
+
 첫 번째 PowerShell에서 Ollama 서버를 실행합니다.
 
 ```powershell
@@ -93,6 +116,9 @@ cd .\Chapter07-Day03\02_Django_EXAONE_Chat
 .\.venv\Scripts\Activate.ps1
 python manage.py runserver
 ```
+
+`python`이 다른 전역 Python을 가리키면 `redis` 패키지를 찾지 못할 수 있으므로,
+반드시 위와 같이 `.venv`를 활성화한 터미널에서 서버를 실행합니다.
 
 브라우저에서 아래 주소로 접속합니다.
 
@@ -124,7 +150,10 @@ python manage.py runserver
 ## 대화 데이터와 맥락
 
 - 각 사용자는 본인의 대화만 조회할 수 있습니다.
-- 현재 대화방의 최근 메시지 최대 12개만 Ollama에 전달됩니다.
+- 전체 대화는 SQLite에 영구 저장됩니다.
+- 현재 대화방의 최근 메시지 최대 12개는 Redis에 1시간 동안 캐시되고 Ollama에 전달됩니다.
+- Redis가 중단되어도 SQLite에서 맥락을 읽어 채팅을 계속할 수 있습니다.
+- Redis 주소와 캐시 시간은 `REDIS_URL`, `CHAT_CONTEXT_CACHE_TIMEOUT` 환경 변수로 변경할 수 있습니다.
 - 새 대화에서는 이전 대화방의 메시지를 사용하지 않습니다.
 - 대화를 삭제하면 제목과 모든 메시지가 DB에서 삭제되고 이후 맥락에서도 제외됩니다.
 - 개인 시스템 프롬프트와 창의성 설정은 같은 계정의 모든 대화에 공통 적용됩니다.
@@ -139,8 +168,10 @@ python manage.py runserver
 │  ├─ templates/chat/      # 채팅, 계정, 개인 설정 화면
 │  ├─ templatetags/        # 서버 측 Markdown 표시
 │  ├─ forms.py             # 회원가입과 개인 설정 폼
+│  ├─ context_cache.py     # Redis 최근 맥락 캐시와 SQLite 폴백
 │  ├─ models.py            # 대화, 메시지, 사용자 설정 모델
 │  ├─ ollama.py            # Ollama API 연결과 스트리밍
+│  ├─ signals.py           # 메시지 변경 시 Redis 캐시 갱신
 │  ├─ urls.py              # chat 앱 URL
 │  ├─ views.py             # 계정, 대화, 스트리밍 처리
 │  └─ tests.py             # Django 자동 테스트

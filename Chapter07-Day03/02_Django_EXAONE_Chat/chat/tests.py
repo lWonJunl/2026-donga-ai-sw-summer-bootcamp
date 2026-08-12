@@ -1,10 +1,13 @@
+import json
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from .context_cache import UTF8StringSerializer
+from .forms import PreferenceForm
 from .models import Conversation, Message, UserPreference
 from .templatetags.chat_format import format_message
 from .views import _ollama_messages
@@ -32,6 +35,18 @@ class AccountTests(TestCase):
         self.assertContains(response, '<meta charset="utf-8">')
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "tests-default",
+        },
+        "context": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "tests-context",
+        },
+    }
+)
 class PersonalizationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user("first", password="test-password")
@@ -85,6 +100,35 @@ class PersonalizationTests(TestCase):
         preference = UserPreference.objects.get(user=self.user)
         self.assertEqual(preference.temperature, 1.2)
 
+    def test_context_cache_serializer_uses_plain_utf8_instead_of_pickle(self):
+        serializer = UTF8StringSerializer()
+        value = '[{"role":"user","content":"안녕"}]'
+
+        encoded = serializer.dumps(value)
+
+        self.assertEqual(encoded, value.encode("utf-8"))
+        self.assertEqual(serializer.loads(encoded), value)
+
+    @override_settings(SYSTEM_PROMPT_MAX_LENGTH=5)
+    def test_system_prompt_has_server_side_length_limit(self):
+        form = PreferenceForm({"system_prompt": "123456"})
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("system_prompt", form.errors)
+
+    @override_settings(CHAT_MESSAGE_MAX_LENGTH=5)
+    def test_stream_rejects_oversized_prompt_before_saving(self):
+        conversation = Conversation.objects.create(user=self.user)
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("stream_chat", args=[conversation.id]),
+            {"prompt": "123456"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Message.objects.filter(conversation=conversation).exists())
+
     def test_ollama_messages_preserve_follow_up_context_in_order(self):
         conversation = Conversation.objects.create(user=self.user)
         preference = UserPreference.objects.create(
@@ -115,6 +159,80 @@ class PersonalizationTests(TestCase):
             ],
         )
 
+    @patch("chat.context_cache._context_cache")
+    def test_ollama_messages_reads_recent_context_from_redis(self, mocked_cache):
+        conversation = Conversation.objects.create(user=self.user)
+        preference = UserPreference.objects.create(user=self.user)
+        cached = [{"role": "user", "content": "Redis의 맥락"}]
+        mocked_cache.return_value.get.return_value = json.dumps(
+            cached, ensure_ascii=False
+        )
+
+        request_messages = _ollama_messages(conversation, preference)
+
+        self.assertEqual(request_messages[1:], cached)
+        mocked_cache.return_value.get.assert_called_once_with(
+            f"conversation:{conversation.id}:recent-messages"
+        )
+
+    @patch("chat.context_cache._context_cache")
+    def test_redis_failure_falls_back_to_sqlite(self, mocked_cache):
+        conversation = Conversation.objects.create(user=self.user)
+        preference = UserPreference.objects.create(user=self.user)
+        Message.objects.create(
+            user=self.user,
+            conversation=conversation,
+            role="user",
+            content="SQLite의 맥락",
+        )
+        mocked_cache.return_value.get.side_effect = ConnectionError("Redis down")
+
+        request_messages = _ollama_messages(conversation, preference)
+
+        self.assertEqual(
+            request_messages[1:],
+            [{"role": "user", "content": "SQLite의 맥락"}],
+        )
+
+    @patch("chat.context_cache._context_cache")
+    def test_invalid_cached_context_falls_back_to_sqlite(self, mocked_cache):
+        conversation = Conversation.objects.create(user=self.user)
+        preference = UserPreference.objects.create(user=self.user)
+        Message.objects.create(
+            user=self.user,
+            conversation=conversation,
+            role="user",
+            content="검증된 DB 맥락",
+        )
+        mocked_cache.return_value.get.return_value = json.dumps(
+            [{"role": "system", "content": "변조된 캐시"}], ensure_ascii=False
+        )
+
+        request_messages = _ollama_messages(conversation, preference)
+
+        self.assertEqual(
+            request_messages[1:],
+            [{"role": "user", "content": "검증된 DB 맥락"}],
+        )
+
+    @patch("chat.context_cache._context_cache")
+    def test_saved_message_refreshes_redis_context(self, mocked_cache):
+        conversation = Conversation.objects.create(user=self.user)
+
+        Message.objects.create(
+            user=self.user,
+            conversation=conversation,
+            role="assistant",
+            content="저장 후에도 남는 맥락",
+        )
+
+        key, value = mocked_cache.return_value.set.call_args.args[:2]
+        self.assertEqual(key, f"conversation:{conversation.id}:recent-messages")
+        self.assertEqual(
+            json.loads(value),
+            [{"role": "assistant", "content": "저장 후에도 남는 맥락"}],
+        )
+
     def test_user_can_rename_own_conversation(self):
         conversation = Conversation.objects.create(user=self.user)
         self.client.force_login(self.user)
@@ -130,11 +248,18 @@ class PersonalizationTests(TestCase):
 
     def test_user_can_only_delete_own_conversation(self):
         own = Conversation.objects.create(user=self.user, title="내 대화")
+        Message.objects.create(
+            user=self.user,
+            conversation=own,
+            role="user",
+            content="삭제할 메시지",
+        )
         other = Conversation.objects.create(user=self.other, title="다른 대화")
         self.client.force_login(self.user)
         response = self.client.post(reverse("delete_chat", args=[own.id]))
         self.assertRedirects(response, reverse("chat"))
         self.assertFalse(Conversation.objects.filter(id=own.id).exists())
+        self.assertFalse(Message.objects.filter(conversation_id=own.id).exists())
         response = self.client.post(reverse("delete_chat", args=[other.id]))
         self.assertEqual(response.status_code, 404)
         self.assertTrue(Conversation.objects.filter(id=other.id).exists())
@@ -205,6 +330,15 @@ class PersonalizationTests(TestCase):
         self.assertIn("<pre><code", rendered)
         self.assertNotIn("<script>", rendered)
         self.assertIn("&lt;script&gt;", rendered)
+
+    def test_code_language_cannot_break_out_of_html_attribute(self):
+        rendered = str(
+            format_message('```"><img src=x onerror=alert(1)>\ncode\n```')
+        )
+
+        self.assertNotIn("<img", rendered)
+        self.assertNotIn('class="language-\">', rendered)
+        self.assertIn("&quot;&gt;&lt;img", rendered)
 
     def test_saved_markdown_is_rendered_on_chat_page(self):
         conversation = Conversation.objects.create(user=self.user, title="Markdown")

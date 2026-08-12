@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,7 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import PreferenceForm, SignUpForm
+from .context_cache import recent_messages
 from .models import Conversation, Message, UserPreference
 from .ollama import ask_ollama, generate_title, stream_ollama
 
@@ -64,16 +66,25 @@ def _save_prompt(user, conversation, prompt):
     conversation.save()
 
 
+def _prompt_error(prompt):
+    if not prompt:
+        return "메시지를 입력하세요."
+    if len(prompt) > settings.CHAT_MESSAGE_MAX_LENGTH:
+        return f"메시지는 {settings.CHAT_MESSAGE_MAX_LENGTH:,}자 이하여야 합니다."
+    return None
+
+
 def _ollama_messages(conversation, preference):
-    # 생성 시간이 가까운 메시지도 기본키를 기준으로 확실하게 정렬합니다.
-    recent = list(conversation.messages.order_by("-created_at", "-id")[:12])
-    recent.reverse()
+    recent = recent_messages(conversation)
     return [
         {
             "role": "system",
-            "content": f"{CONTEXT_INSTRUCTION}\n\n사용자 개인 설정:\n{preference.system_prompt}",
+            "content": (
+                f"{CONTEXT_INSTRUCTION}\n\n사용자 개인 설정:\n"
+                f"{preference.system_prompt[:settings.SYSTEM_PROMPT_MAX_LENGTH]}"
+            ),
         },
-        *[{"role": item.role, "content": item.content} for item in recent],
+        *recent,
     ]
 
 
@@ -152,7 +163,10 @@ def chat(request, conversation_id=None):
     # JavaScript를 사용할 수 없는 브라우저를 위한 일반 전송 방식입니다.
     if request.method == "POST":
         prompt = request.POST.get("prompt", "").strip()
-        if prompt:
+        prompt_error = _prompt_error(prompt)
+        if prompt_error:
+            messages.error(request, prompt_error)
+        else:
             _save_prompt(request.user, conversation, prompt)
             try:
                 request_messages = _ollama_messages(conversation, preference)
@@ -190,8 +204,9 @@ def stream_chat(request, conversation_id):
     if request.method != "POST":
         return redirect("conversation", conversation_id=conversation.id)
     prompt = request.POST.get("prompt", "").strip()
-    if not prompt:
-        return JsonResponse({"error": "메시지를 입력하세요."}, status=400)
+    prompt_error = _prompt_error(prompt)
+    if prompt_error:
+        return JsonResponse({"error": prompt_error}, status=400)
 
     preference, _ = UserPreference.objects.get_or_create(user=request.user)
     _save_prompt(request.user, conversation, prompt)
