@@ -41,6 +41,7 @@
 ├── Chapter06-Day02
 ├── Chapter06-Day03
 ├── Chapter07-Day03
+├── Chapter07-Day04
 └── (In Progress...)
 ```
 
@@ -69,6 +70,7 @@
 | 06 | 03 | Priority Poke Project Enhancement | 📚 Assignment Signal → Priority Poke |
 | 07 | 02 | Generative AI & LLM Fundamentals | |
 | 07 | 03 | Local AI Infrastructure on Windows | |
+| 07 | 04 | Local RAG Pipeline for Korean | |
 <br>
 
 ## 🛠️ Tech Stack
