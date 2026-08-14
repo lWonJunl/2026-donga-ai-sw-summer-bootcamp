@@ -111,6 +111,64 @@ def _audit_message(user_id, conversation_id, role, content):
         pass
 
 
+def _auto_ingest_prompt_urls(user, prompt):
+    try:
+        from .rag_ingest import ingest_url
+        from .rag_urls import extract_urls, url_fingerprint
+    except ImportError:
+        return []
+
+    urls, overflow = extract_urls(prompt, settings.RAG_AUTO_URL_LIMIT)
+    results = []
+    for url in urls:
+        fingerprint = url_fingerprint(url)
+        already_ready = KnowledgeSource.objects.filter(
+            user=user,
+            source_type="url",
+            status="ready",
+            content_hash=fingerprint,
+        ).exists() or KnowledgeSource.objects.filter(
+            user=user,
+            source_type="url",
+            status="ready",
+            source=url,
+        ).exists()
+        try:
+            source = ingest_url(user, url)
+            results.append(
+                {
+                    "url": url,
+                    "name": source.display_name,
+                    "status": "existing" if already_ready else "added",
+                }
+            )
+        except Exception:
+            results.append({"url": url, "name": url, "status": "failed"})
+    if overflow:
+        results.append(
+            {
+                "url": "",
+                "name": f"링크는 한 메시지에서 최대 {settings.RAG_AUTO_URL_LIMIT}개까지 처리합니다.",
+                "status": "limited",
+            }
+        )
+    return results
+
+
+def _flash_link_results(request, results):
+    added = sum(item["status"] == "added" for item in results)
+    existing = sum(item["status"] == "existing" for item in results)
+    failed = sum(item["status"] == "failed" for item in results)
+    if added:
+        messages.success(request, f"프롬프트의 링크 {added}개를 내 지식 자료에 추가했습니다.")
+    if existing:
+        messages.info(request, f"이미 등록된 링크 {existing}개를 다시 사용했습니다.")
+    if failed:
+        messages.warning(request, f"링크 {failed}개를 수집하지 못했지만 채팅은 계속했습니다.")
+    if any(item["status"] == "limited" for item in results):
+        messages.warning(request, f"링크는 한 메시지에서 최대 {settings.RAG_AUTO_URL_LIMIT}개까지 처리합니다.")
+
+
 def _update_auto_title(conversation):
     conversation.refresh_from_db(fields=["title", "title_is_custom"])
     first_user = conversation.messages.filter(role="user").first()
@@ -134,12 +192,19 @@ def _update_auto_title(conversation):
     return title
 
 
-def _streaming_response(user, conversation, request_messages, temperature, sources=None):
+def _streaming_response(
+    user, conversation, request_messages, temperature, sources=None, link_results=None
+):
     sources = sources or []
+    link_results = link_results or []
     def generate():
         chunks = []
         saved = False
         try:
+            if link_results:
+                yield json.dumps(
+                    {"type": "links", "results": link_results}, ensure_ascii=False
+                ) + "\n"
             for chunk in stream_ollama(request_messages, temperature):
                 chunks.append(chunk)
                 yield json.dumps(
@@ -196,6 +261,8 @@ def chat(request, conversation_id=None):
             messages.error(request, prompt_error)
         else:
             _save_prompt(request.user, conversation, prompt)
+            link_results = _auto_ingest_prompt_urls(request.user, prompt)
+            _flash_link_results(request, link_results)
             try:
                 request_messages, sources = _rag_messages(
                     request.user, conversation, preference, prompt
@@ -242,6 +309,7 @@ def stream_chat(request, conversation_id):
 
     preference, _ = UserPreference.objects.get_or_create(user=request.user)
     _save_prompt(request.user, conversation, prompt)
+    link_results = _auto_ingest_prompt_urls(request.user, prompt)
     request_messages, sources = _rag_messages(
         request.user, conversation, preference, prompt
     )
@@ -251,6 +319,7 @@ def stream_chat(request, conversation_id):
         request_messages,
         preference.temperature,
         sources,
+        link_results,
     )
 
 
@@ -388,6 +457,22 @@ def knowledge_view(request):
         "chat/knowledge.html",
         {"form": form, "knowledge_sources": KnowledgeSource.objects.filter(user=request.user)},
     )
+
+
+@login_required
+def delete_knowledge_source_view(request, source_id):
+    source = get_object_or_404(KnowledgeSource, id=source_id, user=request.user)
+    if request.method != "POST":
+        return redirect("knowledge")
+    try:
+        from .rag_ingest import delete_knowledge_source
+
+        display_name = source.display_name
+        delete_knowledge_source(source)
+        messages.success(request, f"{display_name} 자료를 삭제했습니다.")
+    except Exception as error:
+        messages.error(request, f"자료를 삭제하지 못했습니다: {error}")
+    return redirect("knowledge")
 
 
 @login_required

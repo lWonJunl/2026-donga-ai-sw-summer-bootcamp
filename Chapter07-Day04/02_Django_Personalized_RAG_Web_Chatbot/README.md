@@ -9,8 +9,10 @@ Streamlit 없이 Django와 SQLite로 만든 회원별 로컬 AI 채팅 사이트
 - SQLite를 이용한 대화 및 개인 설정 저장
 - Redis를 이용한 최근 대화 맥락 캐시
 - URL·PPTX·DOCX 개인 지식 수집과 Milvus 벡터 검색
+- 채팅 프롬프트에 포함된 공개 URL 자동 수집(메시지당 최대 3개)
 - `multilingual-e5-small` 임베딩과 사용자 ID 기반 검색 격리
 - 답변 근거(파일/페이지/URL) 표시 및 Redis·JSONL 대화 메모리
+- 등록 자료 삭제 시 Milvus 벡터와 업로드 원본까지 함께 정리
 - Ollama 답변 실시간 스트리밍
 - 답변 생성 중단 및 마지막 답변 다시 생성
 - 최근 대화 맥락 유지와 짧은 후속 질문 해석
@@ -152,6 +154,7 @@ python manage.py runserver
 5. 답변 생성 중에는 중지 버튼을 눌러 현재까지의 답변을 저장할 수 있습니다.
 6. 대화 목록에서 제목을 수정하거나 대화를 삭제할 수 있습니다.
 7. `내 지식 자료`에서 공개 URL 또는 PPTX·DOCX를 등록한 뒤 관련 질문을 합니다.
+8. 채팅에 URL과 질문을 함께 붙여 넣으면 새 링크를 자동 등록하고 같은 답변부터 활용합니다.
 
 첫 문서 등록 시 임베딩 모델을 내려받으므로 시간이 걸릴 수 있습니다. 문서 검색이나
 Redis가 일시적으로 실패하면 기존 SQLite 기반 일반 채팅으로 자동 전환됩니다.
@@ -159,6 +162,8 @@ Redis가 일시적으로 실패하면 기존 SQLite 기반 일반 채팅으로 �
 ## 개인화 RAG 동작
 
 - 로그인 사용자의 Django 사용자 ID가 Milvus의 `user_id` 파티션 키로 저장됩니다.
+- 프롬프트의 URL은 정규화해 중복 색인을 방지하며 이미 등록된 자료는 그대로 재사용합니다.
+- 링크 수집이 실패해도 다른 링크 처리와 일반 채팅은 계속됩니다.
 - 검색 필터는 서버에서 생성하므로 다른 계정의 문서가 검색되지 않습니다.
 - 후속 질문은 최근 대화를 바탕으로 독립 검색어로 재작성됩니다.
 - 검색 문서는 신뢰할 수 없는 입력으로 취급하며 문서 안의 명령은 실행하지 않습니다.
@@ -205,11 +210,12 @@ Redis가 일시적으로 실패하면 기존 SQLite 기반 일반 채팅으로 �
 │  ├─ models.py            # 대화, 메시지, 사용자 설정, 지식 자료 모델
 │  ├─ ollama.py            # Ollama API 연결과 스트리밍
 │  ├─ rag_embeddings.py    # multilingual-e5 임베딩
-│  ├─ rag_ingest.py        # 문서 청킹과 Milvus 색인
+│  ├─ rag_ingest.py        # 문서 청킹, 색인, 자료 삭제
 │  ├─ rag_loaders.py       # URL·PPTX·DOCX 안전 로더
 │  ├─ rag_memory.py        # Redis 메모리와 JSONL 로그
 │  ├─ rag_pipeline.py      # 후속 질문 재작성과 RAG 프롬프트
-│  ├─ rag_store.py         # 사용자별 Milvus 검색
+│  ├─ rag_store.py         # 사용자별 Milvus 검색·삭제
+│  ├─ rag_urls.py          # 프롬프트 URL 추출·정규화
 │  ├─ signals.py           # 메시지 변경 시 Redis 캐시 갱신
 │  ├─ urls.py              # chat 앱 URL
 │  ├─ views.py             # 계정, 대화, 스트리밍 처리

@@ -1,4 +1,5 @@
 from functools import lru_cache
+import json
 import socket
 from urllib.parse import urlparse
 
@@ -43,3 +44,14 @@ def search_user_documents(user_id: int, question: str):
         k=settings.RAG_TOP_K,
         expr=f'user_id == "{normalized_user_id}"',
     )
+
+
+def delete_source_documents(user_id: int, source: str):
+    normalized_user_id = str(int(user_id))
+    user_literal = json.dumps(normalized_user_id, ensure_ascii=False)
+    source_literal = json.dumps(str(source), ensure_ascii=False)
+    deleted = get_vector_store().delete(
+        expr=f"user_id == {user_literal} and source == {source_literal}"
+    )
+    if not deleted:
+        raise RuntimeError("Milvus에서 자료 벡터를 삭제하지 못했습니다.")

@@ -33,7 +33,12 @@
     {% for source in knowledge_sources %}
       <div class="knowledge-item">
         <div><strong>{{ source.display_name }}</strong><span>{{ source.get_source_type_display }} · {{ source.created_at|date:"Y.m.d H:i" }}</span></div>
-        <span class="knowledge-status {{ source.status }}">{{ source.get_status_display }}{% if source.status == 'ready' %} · {{ source.chunk_count }}청크{% endif %}</span>
+        <div class="knowledge-item-actions">
+          <span class="knowledge-status {{ source.status }}">{{ source.get_status_display }}{% if source.status == 'ready' %} · {{ source.chunk_count }}청크{% endif %}</span>
+          <form method="post" action="{% url 'delete_knowledge_source' source.id %}" onsubmit="return confirm('이 자료와 검색 벡터를 삭제할까요?');">
+            {% csrf_token %}<button class="knowledge-delete" type="submit">삭제</button>
+          </form>
+        </div>
         {% if source.error %}<p class="field-error">{{ source.error }}</p>{% endif %}
       </div>
     {% empty %}<p class="empty-knowledge">아직 등록된 자료가 없습니다.</p>{% endfor %}

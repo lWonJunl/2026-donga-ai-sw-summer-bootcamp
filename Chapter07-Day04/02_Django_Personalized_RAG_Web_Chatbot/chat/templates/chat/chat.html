@@ -241,6 +241,27 @@
     wrap.insertBefore(box, wrap.querySelector(".message-meta"));
   }
 
+  function addLinkResults(wrap, results) {
+    wrap.querySelector(".link-ingest-results")?.remove();
+    if (!Array.isArray(results) || !results.length) return;
+    const labels = {
+      added: "지식에 추가됨",
+      existing: "기존 지식 사용",
+      failed: "수집 실패",
+      limited: "처리 제한",
+    };
+    const box = document.createElement("div");
+    box.className = "link-ingest-results";
+    box.setAttribute("aria-label", "링크 수집 결과");
+    results.forEach(result => {
+      const item = document.createElement("span");
+      item.className = result.status;
+      item.textContent = `${labels[result.status] || "링크"}: ${result.name}`;
+      box.appendChild(item);
+    });
+    wrap.insertBefore(box, wrap.querySelector(".message-meta"));
+  }
+
   function ensureConversationInSidebar(prompt) {
     if (document.querySelector(".conversation-item.active")) return;
     const item = document.createElement("div");
@@ -292,7 +313,10 @@
         for (const line of lines) {
           if (!line.trim()) continue;
           const data = JSON.parse(line);
-          if (data.type === "chunk") {
+          if (data.type === "links") {
+            addLinkResults(target.wrap, data.results);
+            target.body.textContent = "답변 생성 중…";
+          } else if (data.type === "chunk") {
             answer += data.content;
             target.body.classList.remove("typing");
             target.body.innerHTML = renderMarkdown(answer);
@@ -351,7 +375,8 @@
     startGenerating();
     ensureConversationInSidebar(prompt);
     addMessage("user", prompt);
-    const target = addMessage("assistant", "생각 중…");
+    const hasUrl = /https?:\/\/[^\s<>"']+/i.test(prompt);
+    const target = addMessage("assistant", hasUrl ? "링크 수집 및 분석 중…" : "생각 중…");
     target.body.classList.add("typing");
     textarea.value = "";
     textarea.style.height = "auto";

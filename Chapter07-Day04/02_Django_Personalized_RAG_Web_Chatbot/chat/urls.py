@@ -29,6 +29,11 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("settings/", views.settings_view, name="settings"),
     path("knowledge/", views.knowledge_view, name="knowledge"),
+    path(
+        "knowledge/<int:source_id>/delete/",
+        views.delete_knowledge_source_view,
+        name="delete_knowledge_source",
+    ),
     path("c/<int:conversation_id>/memory/clear/", views.clear_rag_memory, name="clear_rag_memory"),
     path(
         "settings/temperature/",

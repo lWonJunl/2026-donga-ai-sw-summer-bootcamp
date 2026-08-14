@@ -1,4 +1,6 @@
 import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -10,8 +12,9 @@ from .context_cache import UTF8StringSerializer
 from .forms import PreferenceForm
 from .models import Conversation, KnowledgeSource, Message, UserPreference
 from .rag_loaders import validate_public_url
+from .rag_urls import extract_urls, normalize_url, url_fingerprint
 from .templatetags.chat_format import format_message
-from .views import _ollama_messages
+from .views import _auto_ingest_prompt_urls, _ollama_messages
 
 
 class AccountTests(TestCase):
@@ -45,6 +48,41 @@ class RAGSecurityTests(TestCase):
         with self.assertRaisesRegex(ValueError, "인증정보"):
             validate_public_url("https://user:password@example.com/")
 
+    def test_prompt_url_extraction_normalizes_and_deduplicates(self):
+        urls, overflow = extract_urls(
+            "https://Example.com:443/docs#intro 와 https://example.com/docs 를 봐줘."
+        )
+        self.assertEqual(urls, ["https://example.com/docs"])
+        self.assertFalse(overflow)
+
+    def test_prompt_url_extraction_limits_links(self):
+        urls, overflow = extract_urls(
+            " ".join(f"https://example.com/{number}" for number in range(5)), limit=3
+        )
+        self.assertEqual(len(urls), 3)
+        self.assertTrue(overflow)
+
+    def test_url_normalization_does_not_hide_credentials(self):
+        with self.assertRaisesRegex(ValueError, "인증정보"):
+            normalize_url("https://user:password@example.com/private")
+
+    @patch("chat.rag_ingest.get_vector_store")
+    @patch("chat.rag_ingest.load_url")
+    def test_ingest_url_reuses_ready_document(self, mocked_load, mocked_store):
+        from langchain_core.documents import Document
+        from .rag_ingest import ingest_url
+
+        user = User.objects.create_user("url-owner", password="password123!")
+        mocked_load.return_value = [
+            Document(page_content="중복 검사 문서", metadata={"source": "https://example.com/docs"})
+        ]
+        first = ingest_url(user, "https://EXAMPLE.com:443/docs#top")
+        second = ingest_url(user, "https://example.com/docs")
+        self.assertEqual(first.id, second.id)
+        self.assertEqual(first.content_hash, url_fingerprint("https://example.com/docs"))
+        self.assertEqual(mocked_load.call_count, 1)
+        self.assertEqual(mocked_store.return_value.add_documents.call_count, 1)
+
     def test_knowledge_list_is_user_scoped(self):
         owner = User.objects.create_user("owner", password="password123!")
         other = User.objects.create_user("other", password="password123!")
@@ -58,6 +96,90 @@ class RAGSecurityTests(TestCase):
         response = self.client.get(reverse("knowledge"))
         self.assertContains(response, "owner-doc")
         self.assertNotContains(response, "private-other-doc")
+
+    @patch("chat.rag_ingest.ingest_url")
+    def test_prompt_url_auto_ingest_reports_existing_document(self, mocked_ingest):
+        user = User.objects.create_user("auto-owner", password="password123!")
+        url = "https://example.com/guide"
+        source = KnowledgeSource.objects.create(
+            user=user,
+            source_type="url",
+            source=url,
+            display_name=url,
+            content_hash=url_fingerprint(url),
+            status="ready",
+        )
+        mocked_ingest.return_value = source
+        results = _auto_ingest_prompt_urls(user, f"{url} 내용을 요약해줘")
+        self.assertEqual(results[0]["status"], "existing")
+        mocked_ingest.assert_called_once_with(user, url)
+
+    @patch("chat.rag_store.delete_source_documents")
+    def test_owner_can_delete_ready_knowledge_and_vectors(self, mocked_delete):
+        user = User.objects.create_user("delete-owner", password="password123!")
+        source = KnowledgeSource.objects.create(
+            user=user,
+            source_type="url",
+            source="https://example.com/delete",
+            display_name="delete-doc",
+            status="ready",
+        )
+        self.client.force_login(user)
+        response = self.client.post(reverse("delete_knowledge_source", args=[source.id]))
+        self.assertRedirects(response, reverse("knowledge"))
+        self.assertFalse(KnowledgeSource.objects.filter(id=source.id).exists())
+        mocked_delete.assert_called_once_with(user.id, "https://example.com/delete")
+
+    @patch("chat.rag_store.delete_source_documents", side_effect=RuntimeError("Milvus 오류"))
+    def test_vector_failure_keeps_ready_knowledge_record(self, mocked_delete):
+        user = User.objects.create_user("delete-failure", password="password123!")
+        source = KnowledgeSource.objects.create(
+            user=user,
+            source_type="url",
+            source="https://example.com/keep",
+            display_name="keep-doc",
+            status="ready",
+        )
+        self.client.force_login(user)
+        self.client.post(reverse("delete_knowledge_source", args=[source.id]))
+        self.assertTrue(KnowledgeSource.objects.filter(id=source.id).exists())
+
+    def test_user_cannot_delete_another_users_knowledge(self):
+        owner = User.objects.create_user("delete-private-owner", password="password123!")
+        other = User.objects.create_user("delete-private-other", password="password123!")
+        source = KnowledgeSource.objects.create(
+            user=owner,
+            source_type="url",
+            source="https://example.com/private",
+            display_name="private-doc",
+            status="failed",
+        )
+        self.client.force_login(other)
+        response = self.client.post(reverse("delete_knowledge_source", args=[source.id]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(KnowledgeSource.objects.filter(id=source.id).exists())
+
+    @patch("chat.rag_store.delete_source_documents", side_effect=ConnectionError)
+    def test_failed_upload_deletion_removes_safely_scoped_file(self, mocked_delete):
+        from .rag_ingest import delete_knowledge_source
+
+        user = User.objects.create_user("file-delete-owner", password="password123!")
+        with TemporaryDirectory() as directory:
+            user_directory = Path(directory) / str(user.id)
+            user_directory.mkdir()
+            file_path = user_directory / "document.docx"
+            file_path.write_bytes(b"test")
+            source = KnowledgeSource.objects.create(
+                user=user,
+                source_type="docx",
+                source=str(file_path),
+                display_name="document.docx",
+                status="failed",
+            )
+            with override_settings(RAG_UPLOAD_DIR=Path(directory)):
+                delete_knowledge_source(source)
+            self.assertFalse(file_path.exists())
+            self.assertFalse(KnowledgeSource.objects.filter(id=source.id).exists())
 
 
 @override_settings(
@@ -84,6 +206,24 @@ class PersonalizationTests(TestCase):
         response = self.client.get(reverse("chat"))
         self.assertContains(response, "내 질문")
         self.assertNotContains(response, "다른 질문")
+
+    @patch("chat.views._rag_messages", return_value=([{"role": "user", "content": "질문"}], []))
+    @patch(
+        "chat.views._auto_ingest_prompt_urls",
+        return_value=[{"url": "https://example.com/", "name": "https://example.com/", "status": "added"}],
+    )
+    @patch("chat.views.stream_ollama", return_value=iter(["답변"]))
+    def test_stream_reports_automatic_link_ingest(self, mocked_stream, mocked_auto, mocked_rag):
+        conversation = Conversation.objects.create(user=self.user)
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("stream_chat", args=[conversation.id]),
+            {"prompt": "https://example.com 내용을 알려줘"},
+        )
+        events = [json.loads(line) for line in b"".join(response.streaming_content).decode().splitlines()]
+        self.assertEqual(events[0]["type"], "links")
+        self.assertEqual(events[0]["results"][0]["status"], "added")
+        mocked_auto.assert_called_once_with(self.user, "https://example.com 내용을 알려줘")
 
     def test_user_can_save_personal_settings(self):
         self.client.force_login(self.user)
@@ -487,7 +627,7 @@ class PersonalizationTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse("conversation", args=[conversation.id]))
         self.assertContains(response, "window.setTimeout(requestAutoTitle, 300)")
-        self.assertContains(response, 'addMessage("assistant", "생각 중…")')
+        self.assertContains(response, 'hasUrl ? "링크 수집 및 분석 중…" : "생각 중…"')
 
     @patch("chat.views.generate_title", return_value="파이썬 반복문 이해하기")
     @patch("chat.views.stream_ollama", return_value=iter(["반복문", " 설명"]))
