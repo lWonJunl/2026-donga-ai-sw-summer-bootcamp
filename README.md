@@ -88,7 +88,9 @@
 | **External Services** | Google News RSS, Kakao Maps JavaScript API |
 | **Deployment** | Docker, Gunicorn, WhiteNoise, Render |
 | **Testing & Security** | Django TestCase, CSRF, CSP, HSTS, Rate Limiting |
-| **AI (LLM)** | Codex, Gemini |
+| **AI-assisted Development** | Codex, Gemini |
+| **Local AI Runtime** | Ollama, EXAONE 3.5 7.8B |
+| **RAG & AI Infrastructure** | Redis, Milvus, LangChain, Sentence Transformers |
 | **Development Tools** | Visual Studio Code, Git, GitHub |
 
 <br>
@@ -138,6 +140,14 @@
 * 로컬에서는 SQLite를 사용하고, 운영 환경에서는 PostgreSQL·Neon과 Render Web Service를 사용하도록 배포 구성을 분리했습니다.
 * 인증, 요청 제한, 그룹·과제 권한, 개인 진행 상태, 자동 알림과 찌르기 중복 방지를 Django 테스트로 검증했습니다.
 * 개발 과정은 [Day 2 · 과제신호등](Chapter06-Day02/README.md), 최신 구현과 배포 방법은 [Day 3 · 우선콕](Chapter06-Day03/README.md)에서 확인할 수 있습니다.
+
+### Local AI & RAG Chatbot Projects
+
+* Day 3에서는 Ollama의 EXAONE 3.5 7.8B 모델을 Django와 연결해 회원별 대화, 실시간 응답 스트리밍, 대화 관리 기능을 갖춘 로컬 AI 채팅 서비스를 구현했습니다.
+* SQLite에 대화와 개인 설정을 저장하고 Redis에 최근 대화 맥락을 캐시하며, Redis 장애 시 SQLite로 대체하는 구조를 구성했습니다.
+* Day 4에서는 URL·PPTX·DOCX 자료를 사용자별로 수집하고, 임베딩과 Milvus 벡터 검색을 이용하는 개인화 RAG 기능을 추가했습니다.
+* 검색 근거 표시, 사용자별 문서 격리, URL 자동 수집, Redis·JSONL 대화 메모리와 안전한 문서 로딩을 적용했습니다.
+* 자세한 실행 방법과 환경 설정은 [Chapter07-Day03](Chapter07-Day03/README.md), [Django EXAONE Chat](Chapter07-Day03/02_Django_EXAONE_Chat/README.md), [Personalized RAG Chatbot](Chapter07-Day04/02_Django_Personalized_RAG_Web_Chatbot/README.md)에서 확인할 수 있습니다.
 
 ### Campus Navigation Mini Project
 
