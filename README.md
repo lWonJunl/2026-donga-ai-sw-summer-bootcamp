@@ -42,7 +42,8 @@
 ├── Chapter06-Day03
 ├── Chapter07-Day03
 ├── Chapter07-Day04
-└── (In Progress...)
+├── (In Progress...)
+└── Report
 ```
 
 <br>
@@ -99,6 +100,12 @@
 <br>
 
 ## 💡 Learning & Project Highlights
+
+### Algorithm Assignment
+
+* 기본 알고리즘 과제를 수행하며 문제를 분석하고 입력·출력 조건을 정리하는 연습을 했습니다.
+* 반복, 배열, 탐색 등 핵심 알고리즘 유형을 적용해 풀이 과정을 설계하고 구현했습니다.
+* 제한 조건과 실행 효율을 함께 고려하며 여러 풀이를 비교하고 개선했습니다.
 
 ### Algorithm Practice
 

@@ -36,3 +36,6 @@ Thumbs.db
 
 # Day 3 and Day 4 source code is safe to publish. Secrets must stay in ignored
 # .env files; use each project's .env.example as a variable reference.
+
+# Keep locally provided algorithm problem statements out of the repository.
+Report/*.md
