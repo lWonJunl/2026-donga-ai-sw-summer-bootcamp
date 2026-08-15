@@ -69,8 +69,11 @@
 | 06 | 02 | Cloud Computing, Deployment & Docker Basics | 📚 Assignment Signal Project |
 | 06 | 03 | Priority Poke Project Enhancement | 📚 Assignment Signal → Priority Poke |
 | 07 | 02 | Generative AI & LLM Fundamentals | |
-| 07 | 03 | Local AI Infrastructure on Windows | |
-| 07 | 04 | Local RAG Pipeline for Korean | |
+| 07 | 03 | Local AI Infrastructure & EXAONE Django Chatbot | |
+| 07 | 04 | Personalized RAG Web Chatbot | |
+| 08 | 02 | | |
+| 08 | 03 | | |
+| 08 | 04 | | 🏁 Bootcamp Completed |
 <br>
 
 ## 🛠️ Tech Stack
@@ -164,7 +167,7 @@
 
 본 부트캠프는 **AI 기반 개발(Vibe Coding)** 방식을 바탕으로 진행되었습니다.
 
-학습 과정에서는 주로 **ChatGPT(5.5 및 5.6 Sol) 기반 Codex**를 활용하여 문제 해결, 코드 작성, 디버깅 및 문서화를 수행하였으며, 결과물은 직접 검토하고 개선하는 과정을 거쳐 완성하였습니다.
+학습 과정에서는 주로 **ChatGPT(5.5 및 5.6) 기반 Codex**를 활용하여 문제 해결, 코드 작성, 디버깅 및 문서화를 수행하였으며, 결과물은 직접 검토하고 개선하는 과정을 거쳐 완성하였습니다.
 
 AI가 생성한 결과는 실행, 테스트, 코드 검토를 통해 요구사항과 실제 동작이 일치하는지 확인하고, 비밀값과 개인정보가 저장소에 포함되지 않도록 점검했습니다.
 
