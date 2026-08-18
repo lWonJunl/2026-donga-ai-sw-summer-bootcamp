@@ -1,0 +1,61 @@
+{% extends "chat/base.html" %}
+{% block title %}개인 설정 · EXAONE{% endblock %}
+{% block content %}
+<div class="settings-page">
+  <div class="settings-heading">
+    <a class="back-link" href="{% url 'chat' %}">← 채팅으로 돌아가기</a>
+    <h1>개인 설정</h1>
+    <p>EXAONE이 나에게 답변하는 방식과 말투를 설정하세요.</p>
+  </div>
+
+  <section class="settings-panel account-panel">
+    <div class="section-heading">
+      <span class="section-icon">{{ user.username|first|upper }}</span>
+      <div><h2>내 계정</h2><p>현재 로그인한 계정 정보입니다.</p></div>
+    </div>
+    <div class="account-details">
+      <div><span>아이디</span><strong>{{ user.username }}</strong></div>
+      <div><span>이메일</span><strong>{{ user.email|default:"등록되지 않음" }}</strong></div>
+    </div>
+  </section>
+
+  <form method="post" class="settings-form" id="settings-form">
+    {% csrf_token %}
+    <section class="settings-panel">
+      <div class="section-heading">
+        <span class="setting-symbol">✦</span>
+        <div><h2>{{ form.system_prompt.label }}</h2><p>AI의 역할, 말투, 설명 수준을 자유롭게 지정할 수 있습니다.</p></div>
+      </div>
+      <div class="setting-field">
+        {{ form.system_prompt }}
+        <div class="field-meta"><span>답변마다 이 지침이 적용됩니다.</span><span id="prompt-count">0 / 1000</span></div>
+        {% for error in form.system_prompt.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="prompt-presets" aria-label="응답 방식 예시">
+        <button type="button" data-prompt="초보자도 이해할 수 있도록 한국어로 쉽게 설명하고, 필요하면 간단한 예제를 보여주세요.">친절한 선생님</button>
+        <button type="button" data-prompt="핵심 내용부터 간결하게 답하고, 불필요한 설명은 줄여주세요.">간결한 답변</button>
+        <button type="button" data-prompt="전문적인 용어를 정확히 사용하고, 단계별 근거와 실용적인 코드 예제를 포함해 주세요.">개발 전문가</button>
+      </div>
+    </section>
+
+    {% if form.non_field_errors %}<div class="settings-errors">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="settings-actions">
+      <a class="cancel-button" href="{% url 'chat' %}">취소</a>
+      <button class="save-button" type="submit">설정 저장</button>
+    </div>
+  </form>
+</div>
+<script>
+  const promptField = document.querySelector("#id_system_prompt");
+  const promptCount = document.querySelector("#prompt-count");
+  function updatePromptCount() { promptCount.textContent = `${promptField.value.length} / 1000`; }
+  promptField.addEventListener("input", updatePromptCount);
+  document.querySelectorAll(".prompt-presets button").forEach(button => button.addEventListener("click", () => {
+    promptField.value = button.dataset.prompt; updatePromptCount(); promptField.focus();
+  }));
+  document.querySelectorAll(".notice").forEach(notice => window.setTimeout(() => {
+    notice.classList.add("notice-leaving"); window.setTimeout(() => notice.remove(), 250);
+  }, 2500));
+  updatePromptCount();
+</script>
+{% endblock %}

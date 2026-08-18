@@ -39,3 +39,5 @@ Thumbs.db
 
 # Keep locally provided algorithm problem statements out of the repository.
 Report/*.md
+Report/06.py
+Report/07.py

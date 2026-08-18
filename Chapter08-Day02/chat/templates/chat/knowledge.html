@@ -1,0 +1,47 @@
+{% extends "chat/base.html" %}
+{% block title %}내 지식 자료 · EXAONE{% endblock %}
+{% block content %}
+<div class="settings-page knowledge-page">
+  <div class="settings-heading">
+    <a class="back-link" href="{% url 'chat' %}">← 채팅으로 돌아가기</a>
+    <h1>내 지식 자료</h1>
+    <p>웹페이지 URL이나 PDF·PPTX·DOCX 파일을 등록하면 내 계정의 답변에만 사용됩니다.</p>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="settings-form knowledge-form">
+    {% csrf_token %}
+    <section class="settings-panel">
+      <div class="setting-field">
+        <label for="{{ form.urls.id_for_label }}">{{ form.urls.label }}</label>
+        {{ form.urls }}
+        <small>한 줄에 하나씩, 최대 10개. 공개 HTTP/HTTPS 주소만 허용됩니다.</small>
+        {% for error in form.urls.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="setting-field">
+        <label for="{{ form.files.id_for_label }}">{{ form.files.label }}</label>
+        {{ form.files }}
+        <small>최대 10개, 파일당 20MB. 서버 실행 파일은 업로드할 수 없습니다.</small>
+        {% for error in form.files.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      {% for error in form.non_field_errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </section>
+    <div class="settings-actions"><button class="save-button" type="submit">수집 및 색인</button></div>
+  </form>
+
+  <section class="settings-panel knowledge-list">
+    <div class="section-heading"><div><h2>등록된 자료</h2><p>현재 로그인한 계정의 자료만 표시됩니다.</p></div></div>
+    {% for source in knowledge_sources %}
+      <div class="knowledge-item">
+        <div><strong>{{ source.display_name }}</strong><span>{{ source.get_source_type_display }} · {{ source.created_at|date:"Y.m.d H:i" }}</span></div>
+        <div class="knowledge-item-actions">
+          <span class="knowledge-status {{ source.status }}">{{ source.get_status_display }}{% if source.status == 'ready' %} · {{ source.chunk_count }}청크{% endif %}</span>
+          <form method="post" action="{% url 'delete_knowledge_source' source.id %}" onsubmit="return confirm('이 자료와 검색 벡터를 삭제할까요?');">
+            {% csrf_token %}<button class="knowledge-delete" type="submit">삭제</button>
+          </form>
+        </div>
+        {% if source.error %}<p class="field-error">{{ source.error }}</p>{% endif %}
+      </div>
+    {% empty %}<p class="empty-knowledge">아직 등록된 자료가 없습니다.</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

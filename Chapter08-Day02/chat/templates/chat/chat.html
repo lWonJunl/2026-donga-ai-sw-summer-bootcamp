@@ -1,0 +1,509 @@
+{% extends "chat/base.html" %}
+{% load chat_format %}
+{% load tz %}
+{% block title %}{{ conversation.title }} · EXAONE{% endblock %}
+{% block body_class %}chat-page{% endblock %}
+{% block shell %}
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <a class="wordmark" href="{% url 'chat' %}"><span class="logo-mark">E</span><span>EXAONE</span></a>
+      <button class="icon-button collapse-sidebar" id="collapse-sidebar" type="button" aria-label="사이드바 접기" title="사이드바 접기">‹</button>
+      <button class="icon-button mobile-close" id="close-sidebar" type="button" aria-label="메뉴 닫기">×</button>
+    </div>
+    <form action="{% url 'new_chat' %}" method="post">
+      {% csrf_token %}<button class="new-chat" type="submit"><span>＋</span> 새 채팅</button>
+    </form>
+    <div class="history-label">내 대화</div>
+    <nav class="conversation-list" aria-label="대화 목록">
+      {% for item in conversations %}
+        <div class="conversation-item {% if item.id == conversation.id %}active{% endif %}">
+          <a href="{% url 'conversation' item.id %}" class="conversation-link">
+            <span class="chat-icon">◇</span><span class="conversation-title">{{ item.title }}</span>
+          </a>
+          <form action="{% url 'rename_chat' item.id %}" method="post" class="rename-form">
+            {% csrf_token %}<input type="hidden" name="title" value=""><button class="rename-chat" type="button" title="이름 수정" aria-label="{{ item.title }} 이름 수정">✎</button>
+          </form>
+          <form action="{% url 'delete_chat' item.id %}" method="post" onsubmit="return confirm('이 대화와 모든 메시지를 삭제할까요?');">
+            {% csrf_token %}<button class="delete-chat" type="submit" title="대화 삭제" aria-label="{{ item.title }} 삭제">×</button>
+          </form>
+        </div>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+      <a href="{% url 'knowledge' %}" class="sidebar-action"><span>▤</span><span>내 지식 자료</span></a>
+      <a href="{% url 'settings' %}" class="sidebar-action"><span>⚙</span><span>개인 설정</span></a>
+      <div class="profile-row">
+        <span class="avatar">{{ user.username|first|upper }}</span><span class="profile-name">{{ user.username }}</span>
+        <form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="logout-icon" title="로그아웃" aria-label="로그아웃">↗</button></form>
+      </div>
+    </div>
+  </aside>
+
+  <section class="chat-main">
+    <header class="chat-topbar">
+      <button class="icon-button menu-button" id="open-sidebar" type="button" aria-label="메뉴 열기">☰</button>
+      <div class="model-name">EXAONE 3.5</div>
+      <div class="topbar-spacer" aria-hidden="true"></div>
+    </header>
+
+    {% for notice in messages %}<div class="toast {{ notice.tags }}">{{ notice }}</div>{% endfor %}
+
+    <div class="message-scroll" id="message-scroll">
+      <div class="message-column">
+        {% for item in chat_messages %}
+          <article class="message-row {{ item.role }}">
+            {% if item.role == 'assistant' %}<div class="assistant-avatar">E</div>{% endif %}
+            <div class="message-wrap">
+              <div class="message-content">{{ item.content|format_message }}</div>
+              {% if item.sources %}
+                <div class="rag-sources" aria-label="답변 출처">
+                  <strong>참고 자료</strong>
+                  {% for source in item.sources %}
+                    {% if source.url %}<a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.name }}{% if source.page != '-' %} · {{ source.page }}{% endif %}</a>
+                    {% else %}<span>{{ source.name }}{% if source.page != '-' %} · {{ source.page }}{% endif %}</span>{% endif %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="message-meta">
+                <time class="message-time" datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|localtime|date:"Y.m.d H:i" }}</time>
+                <button class="message-copy-button" type="button" aria-label="메시지 복사" title="메시지 복사">⧉ 복사</button>
+              </div>
+              {% if item.role == 'assistant' and forloop.last %}
+                <div class="message-actions"><button class="regenerate-button" type="button" data-url="{% url 'regenerate_chat' conversation.id %}">↻ 다시 생성</button></div>
+              {% endif %}
+            </div>
+          </article>
+        {% empty %}
+          <div class="welcome"><div class="welcome-logo">E</div><h1>무엇을 도와드릴까요?</h1><p>로컬에서 실행되는 EXAONE에게 자유롭게 질문해 보세요.</p></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="composer-area">
+      <form class="composer" method="post" action="{% url 'conversation' conversation.id %}" data-conversation-url="{% url 'conversation' conversation.id %}" data-stream-url="{% url 'stream_chat' conversation.id %}" data-regenerate-url="{% url 'regenerate_chat' conversation.id %}" data-title-url="{% url 'generate_chat_title' conversation.id %}" data-temperature-url="{% url 'update_temperature' %}" id="prompt-form">
+        {% csrf_token %}
+        <textarea name="prompt" rows="1" required autofocus placeholder="EXAONE에게 메시지 보내기" aria-label="메시지"></textarea>
+        <div class="composer-bottom">
+          <div class="creativity-setting">
+            <button class="creativity-button" id="creativity-button" type="button" aria-expanded="false" aria-controls="creativity-popover" aria-label="창의성 설정 열기"><span>창의성</span><span id="creativity-button-value">{{ preference.temperature|floatformat:1 }}</span></button>
+            <div class="creativity-popover" id="creativity-popover" hidden>
+              <div class="creativity-heading"><div><strong>창의성</strong><span>낮을수록 정확하고 높을수록 다양해집니다.</span></div><output id="creativity-value">{{ preference.temperature|floatformat:1 }}</output></div>
+              <input id="creativity-range" type="range" min="0" max="1.5" step="0.1" value="{{ preference.temperature }}" aria-label="창의성">
+              <div class="creativity-scale"><span>정확함</span><span>균형</span><span>창의적</span></div>
+              <p class="creativity-status" id="creativity-status" aria-live="polite"></p>
+            </div>
+          </div>
+          <div class="composer-actions">
+            <button type="submit" class="send-button" id="send-button" aria-label="전송">↑</button>
+            <button type="button" class="stop-button" id="stop-button" aria-label="생성 중지" hidden>■</button>
+          </div>
+        </div>
+      </form>
+      <p class="status-copy" id="generating" hidden>답변 생성 중 · 중지 버튼을 누르면 현재까지의 답변을 저장합니다.</p>
+      <p class="disclaimer">EXAONE은 실수할 수 있습니다. 중요한 정보는 확인하세요.</p>
+    </div>
+  </section>
+</div>
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+<script>
+  const form = document.querySelector("#prompt-form");
+  const sendButton = document.querySelector("#send-button");
+  const stopButton = document.querySelector("#stop-button");
+  const textarea = form.querySelector("textarea");
+  const generating = document.querySelector("#generating");
+  const scroll = document.querySelector("#message-scroll");
+  const sidebar = document.querySelector("#sidebar");
+  const shell = document.querySelector(".app-shell");
+  const backdrop = document.querySelector("#sidebar-backdrop");
+  const creativityButton = document.querySelector("#creativity-button");
+  const creativityPopover = document.querySelector("#creativity-popover");
+  const creativityRange = document.querySelector("#creativity-range");
+  const creativityValue = document.querySelector("#creativity-value");
+  const creativityButtonValue = document.querySelector("#creativity-button-value");
+  const creativityStatus = document.querySelector("#creativity-status");
+  let submitting = false;
+  let streamController = null;
+
+  function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, character => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[character]);
+  }
+
+  function renderMarkdown(source) {
+    const escaped = escapeHtml(source || "");
+    const parts = escaped.split(/```([^\n`]*)\n?([\s\S]*?)```/g);
+    return parts.map((part, index) => {
+      if (index % 3 === 1) return "";
+      if (index % 3 === 2) {
+        const language = parts[index - 1].trim();
+        return `<pre><code class="language-${language}">${part.trim()}</code></pre>`;
+      }
+      return part.split("\n").map(line => {
+        let value = line.replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        const trimmed = value.trim();
+        if (!trimmed) return "<br>";
+        if (trimmed.startsWith("### ")) return `<h3>${trimmed.slice(4)}</h3>`;
+        if (trimmed.startsWith("## ")) return `<h2>${trimmed.slice(3)}</h2>`;
+        if (trimmed.startsWith("# ")) return `<h1>${trimmed.slice(2)}</h1>`;
+        if (/^[-*] /.test(trimmed)) return `<div class="md-list">• ${trimmed.slice(2)}</div>`;
+        if (/^\d+\. /.test(trimmed)) return `<div class="md-list">${trimmed}</div>`;
+        return `<div>${value}</div>`;
+      }).join("");
+    }).join("");
+  }
+
+  function addCodeCopyButtons(root = document) {
+    root.querySelectorAll(".message-content pre").forEach(block => {
+      if (block.querySelector(":scope > .code-copy-button")) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "code-copy-button";
+      button.textContent = "코드 복사";
+      button.setAttribute("aria-label", "코드만 복사");
+      button.title = "코드만 복사";
+      block.prepend(button);
+    });
+  }
+
+  function addMessage(role, content) {
+    document.querySelector(".welcome")?.remove();
+    const row = document.createElement("article");
+    row.className = `message-row ${role}`;
+    if (role === "assistant") {
+      const avatar = document.createElement("div");
+      avatar.className = "assistant-avatar";
+      avatar.textContent = "E";
+      row.appendChild(avatar);
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "message-wrap";
+    const body = document.createElement("div");
+    body.className = "message-content";
+    body.textContent = content;
+    wrap.appendChild(body);
+    const time = document.createElement("time");
+    const now = new Date();
+    time.className = "message-time";
+    time.dateTime = now.toISOString();
+    time.textContent = new Intl.DateTimeFormat("ko-KR", {
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(now).replace(/\. /g, ".").replace(/\.$/, "");
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    meta.appendChild(time);
+    const copyButton = document.createElement("button");
+    copyButton.type = "button";
+    copyButton.className = "message-copy-button";
+    copyButton.setAttribute("aria-label", "메시지 복사");
+    copyButton.title = "메시지 복사";
+    copyButton.textContent = "⧉ 복사";
+    meta.appendChild(copyButton);
+    wrap.appendChild(meta);
+    row.appendChild(wrap);
+    document.querySelector(".message-column").appendChild(row);
+    scroll.scrollTop = scroll.scrollHeight;
+    return {row, wrap, body};
+  }
+
+  function addRegenerateButton(wrap) {
+    document.querySelectorAll(".message-actions").forEach(item => item.remove());
+    const actions = document.createElement("div");
+    actions.className = "message-actions";
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "regenerate-button";
+    retry.dataset.url = form.dataset.regenerateUrl;
+    retry.textContent = "↻ 다시 생성";
+    actions.appendChild(retry);
+    wrap.appendChild(actions);
+  }
+
+  function addSources(wrap, sources) {
+    wrap.querySelector(".rag-sources")?.remove();
+    if (!Array.isArray(sources) || !sources.length) return;
+    const box = document.createElement("div");
+    box.className = "rag-sources";
+    box.setAttribute("aria-label", "답변 출처");
+    const heading = document.createElement("strong");
+    heading.textContent = "참고 자료";
+    box.appendChild(heading);
+    sources.forEach(source => {
+      const item = source.url ? document.createElement("a") : document.createElement("span");
+      if (source.url) {
+        item.href = source.url;
+        item.target = "_blank";
+        item.rel = "noopener noreferrer";
+      }
+      item.textContent = `${source.name}${source.page && source.page !== "-" ? ` · ${source.page}` : ""}`;
+      box.appendChild(item);
+    });
+    wrap.insertBefore(box, wrap.querySelector(".message-meta"));
+  }
+
+  function addLinkResults(wrap, results) {
+    wrap.querySelector(".link-ingest-results")?.remove();
+    if (!Array.isArray(results) || !results.length) return;
+    const labels = {
+      added: "지식에 추가됨",
+      existing: "기존 지식 사용",
+      failed: "수집 실패",
+      limited: "처리 제한",
+    };
+    const box = document.createElement("div");
+    box.className = "link-ingest-results";
+    box.setAttribute("aria-label", "링크 수집 결과");
+    results.forEach(result => {
+      const item = document.createElement("span");
+      item.className = result.status;
+      item.textContent = `${labels[result.status] || "링크"}: ${result.name}`;
+      box.appendChild(item);
+    });
+    wrap.insertBefore(box, wrap.querySelector(".message-meta"));
+  }
+
+  function ensureConversationInSidebar(prompt) {
+    if (document.querySelector(".conversation-item.active")) return;
+    const item = document.createElement("div");
+    item.className = "conversation-item active";
+    const link = document.createElement("a");
+    link.href = form.dataset.conversationUrl;
+    link.className = "conversation-link";
+    const icon = document.createElement("span");
+    icon.className = "chat-icon";
+    icon.textContent = "◇";
+    const title = document.createElement("span");
+    title.className = "conversation-title";
+    title.textContent = prompt.slice(0, 40);
+    link.append(icon, title);
+    item.appendChild(link);
+    document.querySelector(".conversation-list").prepend(item);
+  }
+
+  async function requestAutoTitle() {
+    try {
+      const response = await fetch(form.dataset.titleUrl, {
+        method: "POST",
+        body: new FormData(form),
+        headers: {"X-Requested-With": "XMLHttpRequest"},
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      const title = document.querySelector(".conversation-item.active .conversation-title");
+      if (title && data.title) title.textContent = data.title;
+    } catch (_) {
+      // 제목 생성 실패는 채팅 사용을 막지 않습니다.
+    }
+  }
+
+  async function readStream(url, formData, target) {
+    streamController = new AbortController();
+    let answer = "";
+    try {
+      const response = await fetch(url, {method: "POST", body: formData, signal: streamController.signal, headers: {"X-Requested-With": "XMLHttpRequest"}});
+      if (!response.ok || !response.body) throw new Error("답변 생성을 시작하지 못했습니다.");
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const {value, done} = await reader.read();
+        buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const data = JSON.parse(line);
+          if (data.type === "links") {
+            addLinkResults(target.wrap, data.results);
+            target.body.textContent = "답변 생성 중…";
+          } else if (data.type === "chunk") {
+            answer += data.content;
+            target.body.classList.remove("typing");
+            target.body.innerHTML = renderMarkdown(answer);
+            addCodeCopyButtons(target.body);
+            scroll.scrollTop = scroll.scrollHeight;
+          } else if (data.type === "error") throw new Error(data.message);
+          else if (data.type === "done") {
+            const title = document.querySelector(".conversation-item.active .conversation-title");
+            if (title) title.textContent = data.title;
+            addSources(target.wrap, data.sources);
+          }
+        }
+        if (done) break;
+      }
+      target.body.innerHTML = renderMarkdown(answer || "답변이 생성되지 않았습니다.");
+      addCodeCopyButtons(target.body);
+      addRegenerateButton(target.wrap);
+      requestAutoTitle();
+    } catch (error) {
+      target.body.classList.remove("typing");
+      if (error.name === "AbortError") {
+        target.body.innerHTML = renderMarkdown(answer || "생성을 중지했습니다.");
+        addCodeCopyButtons(target.body);
+        addRegenerateButton(target.wrap);
+        // 서버가 부분 답변을 저장할 시간을 준 뒤 짧은 제목을 생성합니다.
+        window.setTimeout(requestAutoTitle, 300);
+      } else {
+        target.body.classList.add("stream-error");
+        target.body.textContent = error.message;
+      }
+    } finally {
+      streamController = null;
+      submitting = false;
+      sendButton.disabled = false;
+      sendButton.hidden = false;
+      stopButton.hidden = true;
+      generating.hidden = true;
+      textarea.focus();
+    }
+  }
+
+  function startGenerating() {
+    submitting = true;
+    sendButton.disabled = true;
+    sendButton.hidden = true;
+    stopButton.hidden = false;
+    generating.hidden = false;
+  }
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    if (submitting) return;
+    const prompt = textarea.value.trim();
+    if (!prompt) return;
+    const formData = new FormData(form);
+    startGenerating();
+    ensureConversationInSidebar(prompt);
+    addMessage("user", prompt);
+    const hasUrl = /https?:\/\/[^\s<>"']+/i.test(prompt);
+    const target = addMessage("assistant", hasUrl ? "링크 수집 및 분석 중…" : "생각 중…");
+    target.body.classList.add("typing");
+    textarea.value = "";
+    textarea.style.height = "auto";
+    readStream(form.dataset.streamUrl, formData, target);
+  });
+
+  document.addEventListener("click", event => {
+    const codeCopyButton = event.target.closest(".code-copy-button");
+    if (codeCopyButton) {
+      const code = codeCopyButton.parentElement?.querySelector("code")?.textContent || "";
+      if (code) copyText(code, codeCopyButton, "코드 복사", "✓ 복사됨", "코드만 복사");
+      return;
+    }
+    const copyButton = event.target.closest(".message-copy-button");
+    if (copyButton) {
+      const content = copyButton.closest(".message-wrap")?.querySelector(".message-content")?.innerText.trim() || "";
+      if (!content) return;
+      copyText(content, copyButton, "⧉ 복사", "✓ 복사됨", "메시지 복사");
+      return;
+    }
+    const retry = event.target.closest(".regenerate-button");
+    if (!retry || submitting) return;
+    const row = retry.closest(".message-row");
+    const target = {row, wrap: row.querySelector(".message-wrap"), body: row.querySelector(".message-content")};
+    row.querySelector(".message-actions")?.remove();
+    target.body.textContent = "다시 생각 중…";
+    target.body.classList.add("typing");
+    startGenerating();
+    readStream(retry.dataset.url, new FormData(form), target);
+  });
+
+  async function copyText(content, button, idleText, copiedText, ariaLabel) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(content);
+      } else {
+        const helper = document.createElement("textarea");
+        helper.value = content;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "fixed";
+        helper.style.opacity = "0";
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand("copy");
+        helper.remove();
+      }
+      button.textContent = copiedText;
+      button.setAttribute("aria-label", `${ariaLabel} 완료`);
+      window.setTimeout(() => {
+        button.textContent = idleText;
+        button.setAttribute("aria-label", ariaLabel);
+      }, 1500);
+    } catch (_) {
+      button.textContent = "복사 실패";
+      window.setTimeout(() => { button.textContent = idleText; }, 1500);
+    }
+  }
+
+  stopButton.addEventListener("click", () => streamController?.abort());
+  document.querySelectorAll(".toast").forEach(toast => {
+    window.setTimeout(() => {
+      toast.classList.add("leaving");
+      window.setTimeout(() => toast.remove(), 250);
+    }, 2500);
+  });
+  scroll.scrollTop = scroll.scrollHeight;
+  addCodeCopyButtons();
+  textarea.addEventListener("input", () => { textarea.style.height = "auto"; textarea.style.height = Math.min(textarea.scrollHeight, 160) + "px"; });
+  textarea.addEventListener("keydown", event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); } });
+  function updateCreativityDisplay() {
+    const value = Number(creativityRange.value);
+    creativityValue.textContent = value.toFixed(1);
+    creativityButtonValue.textContent = value.toFixed(1);
+    creativityRange.style.setProperty("--range-progress", `${(value / 1.5) * 100}%`);
+  }
+  creativityButton.addEventListener("click", () => {
+    const opening = creativityPopover.hidden;
+    creativityPopover.hidden = !opening;
+    creativityButton.setAttribute("aria-expanded", String(opening));
+  });
+  creativityRange.addEventListener("input", updateCreativityDisplay);
+  creativityRange.addEventListener("change", async () => {
+    creativityStatus.textContent = "저장 중…";
+    try {
+      const body = new URLSearchParams({temperature: creativityRange.value});
+      const response = await fetch(form.dataset.temperatureUrl, {
+        method: "POST",
+        body,
+        headers: {"X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value, "X-Requested-With": "XMLHttpRequest"},
+      });
+      if (!response.ok) throw new Error();
+      creativityStatus.textContent = "저장됨";
+      window.setTimeout(() => { creativityStatus.textContent = ""; }, 1200);
+    } catch (_) {
+      creativityStatus.textContent = "저장하지 못했습니다.";
+    }
+  });
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".creativity-setting")) {
+      creativityPopover.hidden = true;
+      creativityButton.setAttribute("aria-expanded", "false");
+    }
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      creativityPopover.hidden = true;
+      creativityButton.setAttribute("aria-expanded", "false");
+    }
+  });
+  updateCreativityDisplay();
+  document.querySelectorAll(".rename-chat").forEach(button => button.addEventListener("click", () => {
+    const item = button.closest(".conversation-item");
+    const title = window.prompt("새 대화 이름을 입력하세요.", item.querySelector(".conversation-title").textContent.trim());
+    if (title?.trim()) { const renameForm = button.closest("form"); renameForm.querySelector("input[name='title']").value = title.trim(); renameForm.submit(); }
+  }));
+  function isMobile() { return window.matchMedia("(max-width: 760px)").matches; }
+  function setSidebarCollapsed(collapsed, remember = true) {
+    shell.classList.toggle("sidebar-collapsed", collapsed);
+    if (remember) localStorage.setItem("exaone-sidebar-collapsed", collapsed ? "1" : "0");
+  }
+  function toggleMobileSidebar(open) { sidebar.classList.toggle("open", open); backdrop.classList.toggle("show", open); }
+  if (!isMobile() && localStorage.getItem("exaone-sidebar-collapsed") === "1") setSidebarCollapsed(true, false);
+  document.querySelector("#collapse-sidebar").addEventListener("click", () => setSidebarCollapsed(true));
+  document.querySelector("#open-sidebar").addEventListener("click", () => {
+    if (isMobile()) toggleMobileSidebar(true); else setSidebarCollapsed(false);
+  });
+  document.querySelector("#close-sidebar").addEventListener("click", () => toggleMobileSidebar(false));
+  backdrop.addEventListener("click", () => toggleMobileSidebar(false));
+</script>
+{% endblock %}

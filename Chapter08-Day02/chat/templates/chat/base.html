@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EXAONE Chat{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'chat/style.css' %}?v=20260812-12">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block shell %}
+  <header>
+    <a class="brand" href="{% url 'chat' %}">EXAONE Chat</a>
+    <nav>
+      {% if user.is_authenticated %}
+        <span>{{ user.username }}님</span>
+        <a href="{% url 'knowledge' %}">내 지식 자료</a>
+        <a href="{% url 'settings' %}">개인 설정</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}<button class="link-button">로그아웃</button>
+        </form>
+      {% endif %}
+    </nav>
+  </header>
+  <main>
+    {% for message in messages %}<div class="notice {{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+  {% endblock %}
+</body>
+</html>
