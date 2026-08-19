@@ -1,0 +1,50 @@
+{
+  "completed_at_utc": "2026-08-19T04:57:00.450569+00:00",
+  "status": "completed",
+  "domain": "python_basics",
+  "dataset_format": "knowledge_csv_without_stored_questions",
+  "training_method": "full_parameter_supervised_fine_tuning",
+  "device": "cpu",
+  "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+  "training_examples": 20,
+  "trainable_parameters": 494032768,
+  "total_parameters": 494032768,
+  "trainable_parameter_ratio_percent": 100.0,
+  "optimizer": "Adafactor",
+  "settings": {
+    "epochs": 5,
+    "batch_size": 1,
+    "gradient_accumulation": 4,
+    "learning_rate": 2e-05,
+    "max_length": 160,
+    "cpu_threads": 4,
+    "max_steps": null
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "mean_loss": 1.580128,
+      "optimizer_steps": 5
+    },
+    {
+      "epoch": 2,
+      "mean_loss": 0.437846,
+      "optimizer_steps": 10
+    },
+    {
+      "epoch": 3,
+      "mean_loss": 0.194941,
+      "optimizer_steps": 15
+    },
+    {
+      "epoch": 4,
+      "mean_loss": 0.120128,
+      "optimizer_steps": 20
+    },
+    {
+      "epoch": 5,
+      "mean_loss": 0.129893,
+      "optimizer_steps": 25
+    }
+  ]
+}

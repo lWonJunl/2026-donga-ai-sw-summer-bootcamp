@@ -1,5 +1,11 @@
 # Generated model artifacts and potentially private training data must stay local.
+.venv/
+__pycache__/
+*.pyc
 outputs/*
 !outputs/training_results.json
+!outputs/full_finetune_results.json
 data/*.jsonl
 !data/sample_train.jsonl
+data/*.csv
+!data/python_basics_knowledge.csv
