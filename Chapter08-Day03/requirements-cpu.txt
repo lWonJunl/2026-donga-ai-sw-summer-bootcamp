@@ -1,0 +1,4 @@
+transformers==5.15.0
+peft==0.20.0
+safetensors==0.8.0
+sentencepiece==0.2.1

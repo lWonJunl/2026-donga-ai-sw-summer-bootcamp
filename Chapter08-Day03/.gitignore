@@ -1,0 +1,5 @@
+# Generated model artifacts and potentially private training data must stay local.
+outputs/*
+!outputs/training_results.json
+data/*.jsonl
+!data/sample_train.jsonl

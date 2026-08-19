@@ -16,7 +16,7 @@
 | **Program**      | 2026 DongA AI·SW Summer Bootcamp                              |
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
 | **Language**     | Python                                                        |
-| **Status**       | 🚧 In Progress (Day 21)                                       |
+| **Status**       | 🚧 In Progress (Day 22)                                       |
 <!-- ✅ Completed -->
 <br>
 
@@ -43,6 +43,7 @@
 ├── Chapter07-Day03
 ├── Chapter07-Day04
 ├── Chapter08-Day02
+├── Chapter08-Day03
 ├── (In Progress...)
 └── Report
 ```

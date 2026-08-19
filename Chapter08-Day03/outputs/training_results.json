@@ -1,0 +1,27 @@
+{
+  "completed_at_utc": "2026-08-19T01:45:57+00:00",
+  "status": "completed",
+  "device": "cpu",
+  "model_id": "Qwen/Qwen2.5-0.5B-Instruct",
+  "training_examples": 4,
+  "trainable_parameters": 4399104,
+  "total_parameters": 498431872,
+  "trainable_parameter_ratio_percent": 0.8826,
+  "settings": {
+    "epochs": 1,
+    "batch_size": 1,
+    "gradient_accumulation": 1,
+    "learning_rate": 0.0002,
+    "max_length": 64,
+    "lora_r": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "cpu_threads": 4
+  },
+  "epoch_metrics": [
+    {
+      "epoch": 1,
+      "mean_loss": 2.2178
+    }
+  ]
+}
