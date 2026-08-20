@@ -22,26 +22,27 @@
 
 ```text
 2026-donga-ai-sw-summer-bootcamp
-├── Chapter01-Day01
-├── Chapter01-Day02
-├── Chapter01-Day03
-├── Chapter01-Day04
-├── Chapter01-Day05
-├── Chapter02-Day01
-├── Chapter02-Day02
-├── Chapter02-Day03
-├── Chapter02-Day04
-├── Chapter03-Day03
-├── Chapter03-Day04
-├── Chapter04-Day02
-├── Chapter04-Day03
-├── Chapter04-Day04
-├── Chapter06-Day02
-├── Chapter06-Day03
-├── Chapter07-Day03
-├── Chapter07-Day04
-├── Chapter08-Day02
-├── Chapter08-Day03
+├── Week01-Day01
+├── Week01-Day02
+├── Week01-Day03
+├── Week01-Day04
+├── Week01-Day05
+├── Week02-Day01
+├── Week02-Day02
+├── Week02-Day03
+├── Week02-Day04
+├── Week03-Day02
+├── Week03-Day03
+├── Week03-Day04
+├── Week04-Day02
+├── Week04-Day03
+├── Week04-Day04
+├── Week06-Day02
+├── Week06-Day03
+├── Week07-Day03
+├── Week07-Day04
+├── Week08-Day02
+├── Week08-Day03
 └── Report
 ```
 
@@ -49,7 +50,7 @@
 
 ## 📖 Contents
 
-| Chapter | Day | Topic | Note |
+| Week | Day | Topic | Note |
 | :-----: | :--: | ----- | ---- |
 | 01 | 01 | Dynamic Programming |  |
 | 01 | 02 | Greedy Algorithm | |
@@ -105,7 +106,7 @@
 * 동적 계획법, 그리디, BFS, DFS, 다익스트라를 Python으로 구현하고, IDA* 탐색을 이용한 3×3 루빅스 큐브 풀이를 실습했습니다.
 * OpenCV·NumPy로 미로 이미지를 처리하고, NetworkX·Matplotlib으로 그래프를 시각화했으며, Feedparser로 Google News RSS 추천기를 만들었습니다.
 * MySQL의 조회·집계·조인·합집합을 실습하고, 캠퍼스 길찾기에 필요한 장소·도로·경유지 데이터를 관계형 테이블과 SQL 시드 데이터로 모델링했습니다.
-* 자세한 결과는 [Google News RSS 추천기](Chapter01-Day02/README_Google_News_RSS.md), [IDA* 루빅스 큐브 풀이](Chapter01-Day03/README_IDA_Star_Rubiks_Cube.md), [이미지 기반 미로 탐색](Chapter01-Day04/README_Image_Maze_Solver.md)에서 확인할 수 있습니다.
+* 자세한 결과는 [Google News RSS 추천기](Week01-Day02/README_Google_News_RSS.md), [IDA* 루빅스 큐브 풀이](Week01-Day03/README_IDA_Star_Rubiks_Cube.md), [이미지 기반 미로 탐색](Week01-Day04/README_Image_Maze_Solver.md)에서 확인할 수 있습니다.
 
 ### Web Applications, Authentication & Deployment
 
@@ -113,7 +114,7 @@
 * Django 템플릿·정적 파일로 반응형 포트폴리오를 만들고, JSON API의 목록·상세·검색·분류·언어 필터를 구현했습니다.
 * 세션 인증과 `django-allauth`를 연결해 회원가입, 이메일 인증, 비밀번호 재설정, 계정 관리와 소셜 로그인을 구성했습니다.
 * Vercel, Render, Gunicorn·WhiteNoise 배포 흐름을 학습하고, 인증·API 접근·보안 헤더·요청 제한·캐시 정책을 Django 테스트로 검증했습니다.
-* 구현·보안·배포 방법은 [`Portfolio.md`](Chapter04-Day03/Portfolio.md), [`Portfolio_API.md`](Chapter04-Day04/Portfolio_API.md), [`SECURITY.md`](Chapter04-Day04/SECURITY.md), [`SOCIAL_LOGIN_SETUP.md`](Chapter04-Day04/SOCIAL_LOGIN_SETUP.md)에 정리했습니다.
+* 구현·보안·배포 방법은 [`Portfolio.md`](Week04-Day03/Portfolio.md), [`Portfolio_API.md`](Week04-Day04/Portfolio_API.md), [`SECURITY.md`](Week04-Day04/SECURITY.md), [`SOCIAL_LOGIN_SETUP.md`](Week04-Day04/SOCIAL_LOGIN_SETUP.md)에 정리했습니다.
 
 ### Priority Poke Mini Project
 
@@ -122,7 +123,7 @@
 * 마감까지 남은 시간으로 위험도를 계산하고, Service Worker와 Web Push API로 자동 마감 알림과 구성원 '찌르기' 알림을 발송하도록 구현했습니다.
 * 로컬에서는 SQLite를 사용하고, 운영 환경에서는 PostgreSQL·Neon과 Render Web Service를 사용하도록 배포 구성을 분리했습니다.
 * 인증, 요청 제한, 그룹·과제 권한, 개인 진행 상태, 자동 알림과 찌르기 중복 방지를 Django 테스트로 검증했습니다.
-* 개발 과정은 [Day 2 · 과제신호등](Chapter06-Day02/README.md), 최신 구현과 배포 방법은 [Day 3 · 우선콕](Chapter06-Day03/README.md)에서 확인할 수 있습니다.
+* 개발 과정은 [Day 2 · 과제신호등](Week06-Day02/README.md), 최신 구현과 배포 방법은 [Day 3 · 우선콕](Week06-Day03/README.md)에서 확인할 수 있습니다.
 
 ### Local AI, RAG & Fine-Tuning Projects
 
@@ -131,7 +132,7 @@
 * URL·PPTX·DOCX 자료를 사용자별로 수집해 Milvus 벡터 검색과 연결하고, 검색 근거 표시·문서 격리·URL 자동 수집·Redis·JSONL 대화 메모리를 적용했습니다.
 * LangGraph 기반 전처리로 문서를 분할·요약·키워드 추출·태깅하고, PDF/OCR 구조화와 키워드 가중 재정렬로 개인화 RAG 검색 품질을 개선했습니다.
 * Qwen2.5-0.5B-Instruct를 CPU에서 파이썬 기초 문법 자료로 전체 파인튜닝하고, 비교용 LoRA 학습과 검증된 CSV 답변 기반 콘솔 챗봇을 구현했습니다.
-* 상세 내용은 [Django EXAONE Chat](Chapter07-Day03/02_Django_EXAONE_Chat/README.md), [Personalized RAG Chatbot](Chapter07-Day04/02_Django_Personalized_RAG_Web_Chatbot/README.md), [RAG 전처리 고도화](Chapter08-Day02/README.md), [Qwen CPU 파인튜닝](Chapter08-Day03/Chapter08-Day03_Qwen2.5-0.5B_Fine-Tuning.md)에서 확인할 수 있습니다.
+* 상세 내용은 [Django EXAONE Chat](Week07-Day03/02_Django_EXAONE_Chat/README.md), [Personalized RAG Chatbot](Week07-Day04/02_Django_Personalized_RAG_Web_Chatbot/README.md), [RAG 전처리 고도화](Week08-Day02/README.md), [Qwen CPU 파인튜닝](Week08-Day03/Week08-Day03_Qwen2.5-0.5B_Fine-Tuning.md)에서 확인할 수 있습니다.
 
 ### Campus Navigation Mini Project
 
@@ -140,7 +141,7 @@
 * Python 표준 라이브러리 기반 HTTP 서버와 HTML/CSS/JavaScript UI를 연결했습니다.
 * Kakao Maps JavaScript API를 활용해 장소, 현재 위치 및 탐색 경로를 지도에 표시했습니다.
 * 거리·시간 우선 탐색, 실내 경로 우선, 차량 이동 후 주차장에서 도보로 전환하는 복합 경로를 지원합니다.
-* 프로젝트의 진행 과정은 [Day 1](Chapter01-Day05/navDay01.md), [Day 2](Chapter02-Day04/navDay02.md), [Day 3](Chapter03-Day03/navDay03.md), [Day 4](Chapter03-Day04/navDay04.md) 문서에서 확인할 수 있습니다.
+* 프로젝트의 진행 과정은 [Day 1](Week01-Day05/navDay01.md), [Day 2](Week02-Day04/navDay02.md), [Day 3](Week03-Day03/navDay03.md), [Day 4](Week03-Day04/navDay04.md) 문서에서 확인할 수 있습니다.
 
 <br>
 
@@ -166,7 +167,7 @@ AI가 생성한 결과는 실행, 테스트, 코드 검토를 통해 요구사�
 
 ## 📌 Notes
 
-* 학습 내용은 `ChapterXX-DayXX` 형식으로 체계적으로 관리합니다.
+* 학습 내용은 `WeekXX-DayXX` 형식으로 체계적으로 관리합니다.
 * 각 폴더에는 해당 일자의 실습 코드, SQL, 문서 및 프로젝트 결과물을 저장합니다.
 * 캠퍼스 길찾기 실행 시 카카오 JavaScript 키는 공개된 소스 코드가 아닌 `.env` 파일에 설정합니다.
 * Django 프로젝트의 비밀키, 이메일 및 OAuth 설정은 `.env.example`을 참고해 환경변수로 관리합니다.
