@@ -16,12 +16,17 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Chat with the fine-tuned model on CPU")
     parser.add_argument(
-        "--model-dir", type=Path, default=Path("outputs/python_basics_knowledge_model")
+        "--model-dir", type=Path, default=Path("outputs/python_basics_knowledge_model_v2")
     )
     parser.add_argument(
         "--knowledge-file", type=Path, default=Path("data/python_basics_knowledge.csv")
     )
     parser.add_argument("--question", help="Ask one question and exit")
+    parser.add_argument(
+        "--allow-model-fallback",
+        action="store_true",
+        help="Generate an answer only when no CSV keyword matches",
+    )
     parser.add_argument("--max-new-tokens", type=int, default=96)
     parser.add_argument(
         "--cpu-threads", type=int, default=max(1, min(4, os.cpu_count() or 1))
@@ -45,37 +50,39 @@ def main() -> None:
 
     torch.set_num_threads(args.cpu_threads)
     torch.set_num_interop_threads(1)
-    tokenizer = AutoTokenizer.from_pretrained(
-        args.model_dir, local_files_only=True, trust_remote_code=False
-    )
-    model = AutoModelForCausalLM.from_pretrained(
-        args.model_dir,
-        dtype=torch.float32,
-        local_files_only=True,
-        low_cpu_mem_usage=True,
-        trust_remote_code=False,
-        use_safetensors=True,
-    )
-    model.eval()
-
     with args.knowledge_file.open("r", encoding="utf-8-sig", newline="") as handle:
         knowledge_rows = list(csv.DictReader(handle))
+    required_columns = {"category", "concept", "keywords", "content"}
+    if not knowledge_rows or not required_columns.issubset(knowledge_rows[0]):
+        raise ValueError("Knowledge CSV must contain category, concept, keywords, and content columns.")
+
+    tokenizer = None
+    model = None
+    if args.allow_model_fallback:
+        tokenizer = AutoTokenizer.from_pretrained(
+            args.model_dir, local_files_only=True, trust_remote_code=False
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model_dir,
+            dtype=torch.float32,
+            local_files_only=True,
+            low_cpu_mem_usage=True,
+            trust_remote_code=False,
+            use_safetensors=True,
+        )
+        model.eval()
 
     def search_knowledge(question: str) -> dict[str, str] | None:
-        normalized_question = question.lower().replace(" ", "")
-        stop_terms = {"파이썬", "기초", "문법", "함수", "자료형", "사용", "방법"}
+        normalized_question = re.sub(r"\s+", "", question.lower())
         best_row: dict[str, str] | None = None
         best_score = 0
         for row in knowledge_rows:
-            concept = row.get("concept", "").lower()
-            terms = re.findall(r"[0-9a-zA-Z_+*]+|[가-힣]+", concept)
-            expanded_terms: set[str] = set()
-            for term in terms:
-                for part in re.split(r"[과와]", term):
-                    stripped = re.sub(r"(으로|에서|에게|의|은|는|이|가|을|를)$", "", part)
-                    if len(stripped) >= 2 and stripped not in stop_terms:
-                        expanded_terms.add(stripped)
-            score = sum(len(term) for term in expanded_terms if term in normalized_question)
+            terms = {
+                term.lower()
+                for term in row["keywords"].split("|") + [row["concept"], row["category"]]
+                if len(term.strip()) >= 2
+            }
+            score = sum(len(term) for term in terms if term in normalized_question)
             if score > best_score:
                 best_score = score
                 best_row = row
@@ -85,6 +92,12 @@ def main() -> None:
         knowledge = search_knowledge(question)
         if knowledge:
             return knowledge["content"]
+        if not args.allow_model_fallback:
+            return (
+                "현재 학습 데이터에서 관련 문법을 찾지 못했습니다. "
+                "예: python, def, range, list, if, for, try, import처럼 입력해 주세요."
+            )
+        assert tokenizer is not None and model is not None
         messages = [
             {
                 "role": "system",

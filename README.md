@@ -1,10 +1,10 @@
-# 📚 2026 DongA AI·SW Summer Bootcamp
+# 📚 2026 Dong-A AI·SW Summer Bootcamp
 
-> 동아대학교 AI·SW Summer Bootcamp에서 학습한 내용을 정리한 저장소입니다.
+> 2026 동아대학교 AI·SW Summer Bootcamp에서 학습한 내용을 정리한 저장소입니다.
 
-본 저장소는 **2026 DongA AI·SW Summer Bootcamp**의 학습 과정과 실습 결과를 기록하기 위해 제작되었습니다.
+본 저장소는 **2026 Dong-A AI·SW Summer Bootcamp**의 학습 과정과 실습 결과를 기록하기 위해 제작되었습니다.
 
-8주 동안 Python을 중심으로 프로그래밍, 데이터 처리, 생성형 AI 활용 및 프로젝트 개발을 학습하며, 주차별 실습 코드와 과제를 체계적으로 관리합니다.
+8주 동안 Python을 중심으로 프로그래밍, 데이터 처리, 생성형 AI 활용 및 프로젝트 개발을 학습했으며, 주차별 실습 코드와 프로젝트 결과물을 체계적으로 기록했습니다.
 
 <br>
 
@@ -12,12 +12,10 @@
 
 | Item             | Description                                                   |
 | :--------------- | :------------------------------------------------------------ |
-| **Organization** | Dong-A University, National Center of Excellence in Software  |
+| **Organization** | Dong-A University National Center of Excellence in Software   |
 | **Program**      | 2026 DongA AI·SW Summer Bootcamp                              |
 | **Period**       | 2026.06.29 ~ 2026.08.21 (8 Weeks)                             |
-| **Language**     | Python                                                        |
-| **Status**       | 🚧 In Progress (Day 22)                                       |
-<!-- ✅ Completed -->
+| **Status**       | ✅ Completed                                                 |
 <br>
 
 ## 📂 Repository Structure
@@ -44,7 +42,6 @@
 ├── Chapter07-Day04
 ├── Chapter08-Day02
 ├── Chapter08-Day03
-├── (In Progress...)
 └── Report
 ```
 
@@ -71,78 +68,52 @@
 | 04 | 04 | Django Portfolio API & Authentication | 🍽️ Networking |
 | 06 | 02 | Cloud Computing, Deployment & Docker Basics | 📚 Assignment Signal Project |
 | 06 | 03 | Priority Poke Project Enhancement | 📚 Assignment Signal → Priority Poke |
-| 07 | 02 | Generative AI & LLM Fundamentals | |
+| 07 | 02 | Generative AI & LLM Fundamentals | ❌ No hands-on coding |
 | 07 | 03 | Local AI Infrastructure & EXAONE Django Chatbot | |
 | 07 | 04 | Personalized RAG Web Chatbot | |
 | 08 | 02 | RAG Preprocessing Enhancement with LangGraph | |
-| 08 | 03 | | |
-| 08 | 04 | | 🏁 Bootcamp Completed |
+| 08 | 03 | CPU Fine-Tuning of Qwen2.5-0.5B | |
+| 08 | 04 | Bootcamp Wrap-up | 🏁 Bootcamp Completed |
 <br>
 
 ## 🛠️ Tech Stack
 
 | Category | Stack |
 | :-- | :-- |
-| **Languages** | Python, SQL, HTML, CSS, JavaScript |
-| **Python Libraries** | Feedparser, OpenCV, NumPy, NetworkX, Matplotlib |
-| **Web Framework** | Django 5.2 LTS, django-allauth |
-| **Web Server** | Python Standard Library (`http.server`) |
-| **Database** | MySQL, PostgreSQL, Neon, SQLite |
-| **API** | JSON, Django `JsonResponse`, Fetch API |
-| **Browser API** | Web Push API, Service Worker |
-| **Algorithms** | Dynamic Programming, Greedy, BFS, DFS, Dijkstra |
-| **External Services** | Google News RSS, Kakao Maps JavaScript API |
-| **Deployment** | Docker, Gunicorn, WhiteNoise, Render |
+| **Languages & Markup** | Python, SQL, HTML, CSS, JavaScript |
+| **Algorithms & Visualization** | Dynamic Programming, Greedy, BFS, DFS, Dijkstra, OpenCV, NumPy, NetworkX, Matplotlib |
+| **Web Application** | Django 5.2 LTS, django-allauth, Django `JsonResponse`, Fetch API |
+| **Database & Cache** | MySQL, SQLite, PostgreSQL, Redis |
+| **Push & Browser** | Web Push API, Service Worker, pywebpush, VAPID |
+| **External Integration** | Feedparser, Google News RSS, Kakao Maps JavaScript API |
+| **Web Server & Deployment** | Python `http.server`, Gunicorn, WhiteNoise, Docker, Vercel, Render, Neon |
+| **Linux & Virtualization** | Rocky Linux 9.8 Minimal, VMware |
+| **Remote Access & File Transfer** | PuTTY, WinSCP |
 | **Testing & Security** | Django TestCase, CSRF, CSP, HSTS, Rate Limiting |
+| **Local LLM** | Ollama, EXAONE 3.5 7.8B, Qwen2.5-0.5B-Instruct |
+| **RAG & Document Processing** | LangChain, LangGraph, Sentence Transformers, Milvus, Beautiful Soup, python-docx, python-pptx, pypdf, PyMuPDF, pytesseract |
+| **Fine-Tuning** | PyTorch 2.7 (CPU), Transformers, PEFT (LoRA), Safetensors, SentencePiece |
 | **AI-assisted Development** | Codex, Gemini |
-| **Local AI Runtime** | Ollama, EXAONE 3.5 7.8B |
-| **RAG & AI Infrastructure** | Redis, Milvus, LangChain, LangGraph, Sentence Transformers |
-| **Development Tools** | Visual Studio Code, Git, GitHub |
+| **Development Tools** | Visual Studio Code, Git, GitHub, Docker Desktop |
 
 <br>
 
 ## 💡 Learning & Project Highlights
 
-### Algorithm Assignment
+### Algorithms & Data Foundations
 
-* 기본 알고리즘 과제를 수행하며 문제를 분석하고 입력·출력 조건을 정리하는 연습을 했습니다.
-* 반복, 배열, 탐색 등 핵심 알고리즘 유형을 적용해 풀이 과정을 설계하고 구현했습니다.
-* 제한 조건과 실행 효율을 함께 고려하며 여러 풀이를 비교하고 개선했습니다.
+* 동적 계획법, 그리디, BFS, DFS, 다익스트라를 Python으로 구현하고, IDA* 탐색을 이용한 3×3 루빅스 큐브 풀이를 실습했습니다.
+* OpenCV·NumPy로 미로 이미지를 처리하고, NetworkX·Matplotlib으로 그래프를 시각화했으며, Feedparser로 Google News RSS 추천기를 만들었습니다.
+* MySQL의 조회·집계·조인·합집합을 실습하고, 캠퍼스 길찾기에 필요한 장소·도로·경유지 데이터를 관계형 테이블과 SQL 시드 데이터로 모델링했습니다.
+* 자세한 결과는 [Google News RSS 추천기](Chapter01-Day02/README_Google_News_RSS.md), [IDA* 루빅스 큐브 풀이](Chapter01-Day03/README_IDA_Star_Rubiks_Cube.md), [이미지 기반 미로 탐색](Chapter01-Day04/README_Image_Maze_Solver.md)에서 확인할 수 있습니다.
 
-### Algorithm Practice
+### Web Applications, Authentication & Deployment
 
-* 동적 계획법, 그리디, BFS, DFS, 다익스트라 알고리즘을 Python으로 구현했습니다.
-* 미로 이미지 처리에는 OpenCV와 NumPy를 사용하고, 그래프 시각화에는 NetworkX와 Matplotlib을 활용했습니다.
-* Feedparser를 이용해 Google News RSS 기반 뉴스 추천 미니 프로젝트를 구현했습니다.
-* 3×3 루빅스 큐브의 상태와 회전을 배열로 모델링하고 IDA* 탐색으로 해법을 찾는 과정을 실습했습니다.
-* 자세한 내용은 [Google News RSS 추천기](Chapter01-Day02/README_Google_News_RSS.md), [IDA* 루빅스 큐브 풀이](Chapter01-Day03/README_IDA_Star_Rubiks_Cube.md), [이미지 기반 미로 탐색](Chapter01-Day04/README_Image_Maze_Solver.md)에서 확인할 수 있습니다.
-
-### Database Practice
-
-* MySQL에서 `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, `UNION` 등의 기본 쿼리를 실습했습니다.
-* 캠퍼스 길찾기에 필요한 장소, 도로 및 경유지 데이터를 관계형 테이블과 SQL 시드 데이터로 구성했습니다.
-* SQL의 장소와 도로 데이터를 Python 객체로 변환해 경로 탐색 그래프의 정점과 간선으로 활용했습니다.
-
-### Django Practice
-
-* Linux 환경에서 Python과 Django를 설치하고 기본 프로젝트를 생성했습니다.
-* `ALLOWED_HOSTS`와 방화벽을 설정하고 외부에서 Django 개발 서버에 접속하는 과정을 실습했습니다.
-* Django 템플릿과 정적 파일을 이용해 반응형 개인 포트폴리오를 구성하고, Gunicorn·WhiteNoise·Render 배포 설정을 분리했습니다.
-* UTF-8 텍스트 파일을 읽어 목록·상세 조회와 검색·분류·언어 필터를 제공하는 JSON API를 구현했습니다.
-* Django 세션 인증과 `django-allauth`를 연결해 회원가입, 이메일 인증, 로그인 및 계정 관리 기능을 구성했습니다.
-* 인증 상태에 따른 HTTP 응답, 보안 헤더, 요청 제한 및 캐시 정책을 테스트로 검증했습니다.
-* 포트폴리오 프로젝트의 구성과 실행 방법은 [`Portfolio.md`](Chapter04-Day03/Portfolio.md)에서 확인할 수 있습니다.
-
-### Portfolio API Mini Project
-
-* 기존 개인 포트폴리오에 Django 기반의 인증된 프로젝트 API를 연결했습니다.
-* JavaScript Fetch API를 사용해 필터링된 JSON 응답과 프로젝트 카드를 화면에 표시했습니다.
-* 한국어·영어 선택, 카테고리 분류 및 검색어를 쿼리 매개변수로 전달하도록 구현했습니다.
-* 이메일 인증, 비밀번호 재설정, 사용자 정보 수정과 Google·GitHub·Kakao·Naver 소셜 로그인 설정을 구성했습니다.
-* 운영 환경의 비밀키, 허용 호스트, HTTPS 및 이메일 서버 설정을 환경변수로 분리했습니다.
-* 회원가입·로그인·API 접근·보안 헤더·캐시 정책을 Django 테스트로 검증했습니다.
-* 자세한 구현 내용과 실행 방법은 [`Portfolio_API.md`](Chapter04-Day04/Portfolio_API.md)에서 확인할 수 있습니다.
-* 보안 설정과 소셜 로그인 구성은 [`SECURITY.md`](Chapter04-Day04/SECURITY.md), [`SOCIAL_LOGIN_SETUP.md`](Chapter04-Day04/SOCIAL_LOGIN_SETUP.md)에 정리했습니다.
+* VMware의 Rocky Linux 9.8 Minimal 환경에서 Django 서버를 구성하고, `ALLOWED_HOSTS`와 방화벽 설정을 통해 외부 접속을 실습했습니다.
+* Django 템플릿·정적 파일로 반응형 포트폴리오를 만들고, JSON API의 목록·상세·검색·분류·언어 필터를 구현했습니다.
+* 세션 인증과 `django-allauth`를 연결해 회원가입, 이메일 인증, 비밀번호 재설정, 계정 관리와 소셜 로그인을 구성했습니다.
+* Vercel, Render, Gunicorn·WhiteNoise 배포 흐름을 학습하고, 인증·API 접근·보안 헤더·요청 제한·캐시 정책을 Django 테스트로 검증했습니다.
+* 구현·보안·배포 방법은 [`Portfolio.md`](Chapter04-Day03/Portfolio.md), [`Portfolio_API.md`](Chapter04-Day04/Portfolio_API.md), [`SECURITY.md`](Chapter04-Day04/SECURITY.md), [`SOCIAL_LOGIN_SETUP.md`](Chapter04-Day04/SOCIAL_LOGIN_SETUP.md)에 정리했습니다.
 
 ### Priority Poke Mini Project
 
@@ -153,14 +124,14 @@
 * 인증, 요청 제한, 그룹·과제 권한, 개인 진행 상태, 자동 알림과 찌르기 중복 방지를 Django 테스트로 검증했습니다.
 * 개발 과정은 [Day 2 · 과제신호등](Chapter06-Day02/README.md), 최신 구현과 배포 방법은 [Day 3 · 우선콕](Chapter06-Day03/README.md)에서 확인할 수 있습니다.
 
-### Local AI & RAG Chatbot Projects
+### Local AI, RAG & Fine-Tuning Projects
 
-* Day 3에서는 Ollama의 EXAONE 3.5 7.8B 모델을 Django와 연결해 회원별 대화, 실시간 응답 스트리밍, 대화 관리 기능을 갖춘 로컬 AI 채팅 서비스를 구현했습니다.
-* SQLite에 대화와 개인 설정을 저장하고 Redis에 최근 대화 맥락을 캐시하며, Redis 장애 시 SQLite로 대체하는 구조를 구성했습니다.
-* Day 4에서는 URL·PPTX·DOCX 자료를 사용자별로 수집하고, 임베딩과 Milvus 벡터 검색을 이용하는 개인화 RAG 기능을 추가했습니다.
-* 검색 근거 표시, 사용자별 문서 격리, URL 자동 수집, Redis·JSONL 대화 메모리와 안전한 문서 로딩을 적용했습니다.
-* Day 8에서는 LangGraph로 문서 분할·요약·키워드 추출·태깅 단계를 구성하고, PDF/OCR 전처리와 키워드 가중 재정렬로 검색 품질을 개선했습니다.
-* 자세한 실행 방법과 환경 설정은 [Chapter07-Day03](Chapter07-Day03/README.md), [Django EXAONE Chat](Chapter07-Day03/02_Django_EXAONE_Chat/README.md), [Personalized RAG Chatbot](Chapter07-Day04/02_Django_Personalized_RAG_Web_Chatbot/README.md), [Chapter08-Day02 RAG 전처리 고도화](Chapter08-Day02/README.md)에서 확인할 수 있습니다.
+* Ollama의 EXAONE 3.5 7.8B를 Django와 연결해 회원별 대화, 실시간 스트리밍 응답, 대화 제목·개인 설정 관리 기능을 갖춘 로컬 AI 채팅 서비스를 구현했습니다.
+* SQLite에 대화와 설정을 저장하고 Redis에 최근 문맥을 캐시했으며, Redis를 사용할 수 없을 때 SQLite 기반 문맥으로 동작하도록 구성했습니다.
+* URL·PPTX·DOCX 자료를 사용자별로 수집해 Milvus 벡터 검색과 연결하고, 검색 근거 표시·문서 격리·URL 자동 수집·Redis·JSONL 대화 메모리를 적용했습니다.
+* LangGraph 기반 전처리로 문서를 분할·요약·키워드 추출·태깅하고, PDF/OCR 구조화와 키워드 가중 재정렬로 개인화 RAG 검색 품질을 개선했습니다.
+* Qwen2.5-0.5B-Instruct를 CPU에서 파이썬 기초 문법 자료로 전체 파인튜닝하고, 비교용 LoRA 학습과 검증된 CSV 답변 기반 콘솔 챗봇을 구현했습니다.
+* 상세 내용은 [Django EXAONE Chat](Chapter07-Day03/02_Django_EXAONE_Chat/README.md), [Personalized RAG Chatbot](Chapter07-Day04/02_Django_Personalized_RAG_Web_Chatbot/README.md), [RAG 전처리 고도화](Chapter08-Day02/README.md), [Qwen CPU 파인튜닝](Chapter08-Day03/Chapter08-Day03_Qwen2.5-0.5B_Fine-Tuning.md)에서 확인할 수 있습니다.
 
 ### Campus Navigation Mini Project
 
@@ -200,4 +171,4 @@ AI가 생성한 결과는 실행, 테스트, 코드 검토를 통해 요구사�
 * 캠퍼스 길찾기 실행 시 카카오 JavaScript 키는 공개된 소스 코드가 아닌 `.env` 파일에 설정합니다.
 * Django 프로젝트의 비밀키, 이메일 및 OAuth 설정은 `.env.example`을 참고해 환경변수로 관리합니다.
 * SQLite 사용자 데이터베이스, `.env`, 로그, 캐시 및 백업 파일은 Git에 포함하지 않습니다.
-* 부트캠프 진행에 따라 학습 내용과 프로젝트 결과물을 계속 업데이트합니다.
+* 수료 후에도 학습 결과물을 포트폴리오용으로 보완할 수 있습니다.

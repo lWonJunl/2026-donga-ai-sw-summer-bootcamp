@@ -13,14 +13,14 @@ CSV에는 질문이나 모델이 생성한 답변을 넣지 않고, 파이썬 �
 - `content`: 학습할 설명과 예제
 - `source_url`: 확인에 사용한 Python 공식 문서 주소
 
-현재 숫자, 문자열, 조건문, 반복문, 함수, 리스트·튜플·딕셔너리와 예외 처리에 관한 핵심 자료 10건이 들어 있습니다. CSV 파일 자체에는 질문 열이 없습니다.
+현재 Python 개요, 변수, 숫자, 문자열, 자료구조, 조건문, 반복문, 함수, 모듈, 예외 처리, 파일, JSON에 관한 핵심 자료 25건이 들어 있습니다. CSV 파일 자체에는 질문 열이 없고, `keywords` 열은 사용자 입력을 관련 문법 정보에 연결하는 용도입니다.
 
 ## 설치
 
-PowerShell에서 다음 명령을 실행합니다.
+저장소 루트의 PowerShell에서 다음 명령을 실행합니다.
 
 ```powershell
-cd C:\Users\user\Documents\Ollama2
+cd .\Chapter08-Day03
 .\install_cpu_deps.ps1
 ```
 
@@ -29,26 +29,26 @@ CUDA가 아닌 `torch==2.7.0+cpu`를 사용합니다.
 ## 전체 파인튜닝
 
 ```powershell
-cd C:\Users\user\Documents\Ollama2
+cd .\Chapter08-Day03
 .\.venv\Scripts\python.exe .\train_cpu_full_finetune.py `
   --train-file .\data\python_basics_knowledge.csv `
-  --output-dir .\outputs\python_basics_knowledge_model `
-  --epochs 5 --batch-size 1 --gradient-accumulation 4 `
+  --output-dir .\outputs\python_basics_knowledge_model_v2 `
+  --epochs 3 --batch-size 1 --gradient-accumulation 4 `
   --max-length 160 --cpu-threads 4
 ```
 
-모델의 모든 파라미터를 학습하므로 LoRA보다 느리고 메모리를 더 사용합니다. 완성된 전체 가중치와 `training_results.json`은 `C:\Users\user\Documents\Ollama2\outputs\python_basics_knowledge_model`에 저장됩니다.
+모델의 모든 파라미터를 학습하므로 LoRA보다 느리고 메모리를 더 사용합니다. 완성된 전체 가중치와 `training_results.json`은 `outputs\python_basics_knowledge_model_v2`에 저장됩니다.
 
 이번 실제 학습 결과의 공개 가능한 요약은 [`outputs/full_finetune_results.json`](outputs/full_finetune_results.json)에 저장했습니다.
 
 ## 사용자 질문 실행
 
 ```powershell
-cd C:\Users\user\Documents\Ollama2
+cd .\Chapter08-Day03
 .\.venv\Scripts\python.exe .\chat_finetuned_cpu.py
 ```
 
-콘솔에 파이썬 기초 질문을 입력하면 답변합니다. CSV에 있는 핵심 문법은 검증된 `content`를 그대로 답해 작은 0.5B 모델의 숫자·문법 왜곡을 막고, CSV에서 찾지 못한 질문은 파인튜닝 모델이 생성합니다. `종료`, `exit`, `quit` 중 하나를 입력하면 끝납니다.
+콘솔에 파이썬 기초 질문을 입력하면 답변합니다. CSV 키워드와 일치하는 질문은 검증된 `content`를 그대로 답해 작은 0.5B 모델의 숫자·문법 왜곡을 막습니다. 일치하지 않는 질문은 데이터 범위 밖이라고 안내합니다. `--allow-model-fallback`을 넣으면 미일치 질문도 파인튜닝 모델이 생성합니다. `종료`, `exit`, `quit` 중 하나를 입력하면 끝납니다.
 
 질문 한 건만 실행하고 종료할 수도 있습니다.
 
