@@ -75,6 +75,7 @@
 | 08 | 02 | RAG Preprocessing Enhancement with LangGraph | |
 | 08 | 03 | CPU Fine-Tuning of Qwen2.5-0.5B | |
 | 08 | 04 | Bootcamp Wrap-up | 🏁 Bootcamp Completed |
+| After | Session | | 🍽️ Networking |
 <br>
 
 ## 🛠️ Tech Stack
